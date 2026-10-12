@@ -105,8 +105,12 @@ export const Footer: React.FC = () => {
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-hidden="true" />
                 <span>
                   {BUSINESS.addressLine1}
-                  <br />
-                  {BUSINESS.addressLine2}
+                  {BUSINESS.addressLine2 && (
+                    <>
+                      <br />
+                      {BUSINESS.addressLine2}
+                    </>
+                  )}
                   <br />
                   {BUSINESS.city}, {BUSINESS.state} {BUSINESS.postalCode}
                   <br />

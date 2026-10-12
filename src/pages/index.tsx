@@ -7,7 +7,6 @@ import { BuyBox } from '../components/BuyBox';
 import { Benefits } from '../components/Benefits';
 import { ComparisonTable } from '../components/ComparisonTable';
 import { SizeGuide } from '../components/SizeGuide';
-import { TrustBadges } from '../components/TrustBadges';
 import { ShippingReturns } from '../components/ShippingReturns';
 import { Faq } from '../components/Faq';
 import { Footer } from '../components/Footer';
@@ -43,14 +42,20 @@ const SectionFallback: React.FC<{ label: string }> = ({ label }) => (
 /**
  * Single-product landing page — 12-column split-screen layout.
  *
- * Mobile-first: one column from 390px, splitting into the editorial column
- * (left) and a sticky purchase column (right) only at `lg`. Vertical rhythm
- * is py-10 / sm:py-16; tap targets are min-h-12; there is no scroll-reveal
- * animation (it hides content on slow devices and hurts Core Web Vitals);
- * prefers-reduced-motion is respected globally in globals.css.
+ * Mobile reading order (one column from 390px): hero → size finder → select
+ * package (buy column) → why a ramp → the remaining editorial sections.
+ * Size first, price second, story third.
  *
- * Left  (7 cols): editorial content, natural scroll.
- * Right (5 cols): sticky purchase column, always in view while reading.
+ * Vertical rhythm is gap-y-16 everywhere; tap targets are min-h-12; there is
+ * no scroll-reveal animation (it hides content on slow devices and hurts
+ * Core Web Vitals); prefers-reduced-motion is respected globally in
+ * globals.css.
+ *
+ * At `lg` the `lg:order-*` values restore today's editorial sequence
+ * (hero, benefits, comparison, size guide, founder, badges, shipping, faq)
+ * while the buy column takes explicit grid placement — `col-start-8`
+ * spanning `row-span-full` so the sticky purchase column stays glued for
+ * the full page.
  */
 const Page: React.FC = () => {
   return (
@@ -62,46 +67,19 @@ const Page: React.FC = () => {
       <StickyHeader />
 
       <main className="mx-auto max-w-screen-lg px-4 pb-24 pt-10 sm:px-6 sm:pt-16">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
-          {/* ---------------- LEFT: editorial column (7) ---------------- */}
-          <div className="space-y-16 lg:col-span-7">
+        <div className="grid grid-cols-1 gap-y-16 lg:grid-cols-12 lg:gap-x-12">
+          {/* ---------------- HERO (mobile 1 | desktop 1) ---------------- */}
+          <div className="lg:col-span-7 lg:order-1">
             <HeroSection />
-
-            {GATES.videoProof && (
-              <Suspense fallback={<SectionFallback label="the demo video" />}>
-                <VideoProof />
-              </Suspense>
-            )}
-
-            {GATES.ugcGallery && (
-              <Suspense fallback={<SectionFallback label="owner videos" />}>
-                <UGCGallery />
-              </Suspense>
-            )}
-
-            <Benefits />
-
-            <ComparisonTable />
-
-            <SizeGuide />
-
-            {GATES.testimonials && (
-              <Suspense fallback={<SectionFallback label="reviews" />}>
-                <Testimonials />
-              </Suspense>
-            )}
-
-            <FounderNote />
-
-            <TrustBadges />
-
-            <ShippingReturns />
-
-            <Faq />
           </div>
 
-          {/* ---------------- RIGHT: sticky buy column (5) ---------------- */}
-          <aside className="lg:col-span-5">
+          {/* ---------------- SIZE FINDER (mobile 2 | desktop 6) ---------------- */}
+          <div className="lg:col-span-7 lg:order-6">
+            <SizeGuide />
+          </div>
+
+          {/* ---------------- RIGHT: sticky buy column (mobile 3) ---------------- */}
+          <aside className="lg:col-start-8 lg:col-span-5 lg:row-span-full">
             <div
               id="offer"
               className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1"
@@ -115,6 +93,55 @@ const Page: React.FC = () => {
               </p>
             </div>
           </aside>
+
+          {/* ---------------- WHY A RAMP (mobile 4 | desktop 4) ---------------- */}
+          <div className="lg:col-span-7 lg:order-4">
+            <Benefits />
+          </div>
+
+          {/* ---------------- HEAD TO HEAD (mobile 5 | desktop 5) ---------------- */}
+          <div className="lg:col-span-7 lg:order-5">
+            <ComparisonTable />
+          </div>
+
+          {GATES.videoProof && (
+            <div className="lg:col-span-7 lg:order-2">
+              <Suspense fallback={<SectionFallback label="the demo video" />}>
+                <VideoProof />
+              </Suspense>
+            </div>
+          )}
+
+          {GATES.ugcGallery && (
+            <div className="lg:col-span-7 lg:order-3">
+              <Suspense fallback={<SectionFallback label="owner videos" />}>
+                <UGCGallery />
+              </Suspense>
+            </div>
+          )}
+
+          {GATES.testimonials && (
+            <div className="lg:col-span-7 lg:order-7">
+              <Suspense fallback={<SectionFallback label="reviews" />}>
+                <Testimonials />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ---------------- FOUNDER NOTE (desktop 8) ---------------- */}
+          <div className="lg:col-span-7 lg:order-8">
+            <FounderNote />
+          </div>
+
+          {/* ---------------- SHIPPING (desktop 9) ---------------- */}
+          <div className="lg:col-span-7 lg:order-9">
+            <ShippingReturns />
+          </div>
+
+          {/* ---------------- FAQ (desktop 10) ---------------- */}
+          <div className="lg:col-span-7 lg:order-10">
+            <Faq />
+          </div>
         </div>
       </main>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PawPrint, ShoppingCart, ArrowRight } from 'lucide-react';
+import { PawPrint, ShoppingCart } from 'lucide-react';
 import { useCart } from '../lib/cart-context';
 import { usePurchase } from '../lib/purchase-context';
 import { formatMoney, money } from '../lib/offers';
@@ -8,6 +8,10 @@ import { formatMoney, money } from '../lib/offers';
  * Sticky header. Appears on scroll; pairs the brand with the LIVE offer price
  * from the shared purchase context — the old version hardcoded $199 / $149,
  * which contradicted offers.ts the moment pricing changed.
+ *
+ * There is deliberately no CTA button in the header (removed per owner
+ * request): the buy column, the size-finder "Select" buttons and the mobile
+ * sticky buy bar already carry every conversion path.
  */
 export const StickyHeader: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -50,14 +54,6 @@ export const StickyHeader: React.FC = () => {
               {totalQuantity}
             </span>
           )}
-
-          <a
-            href="#offer"
-            className="flex min-h-12 items-center gap-1.5 rounded-md bg-stone-900 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-stone-800"
-          >
-            Buy Now
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </a>
         </div>
       </div>
     </header>

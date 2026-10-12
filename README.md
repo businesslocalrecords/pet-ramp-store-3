@@ -16,12 +16,12 @@ before paid traffic.
 | # | Section | Purpose |
 |---|---------|---------|
 | 1 | `AnnouncementBar` | Static service bar — shipping, guarantee, warranty (all from `policy.ts`) |
-| 2 | `StickyHeader` | Logo + live offer price + buy CTA on scroll |
+| 2 | `StickyHeader` | Logo + live offer price + cart on scroll (no CTA button — owner request) |
 | 3 | `HeroSection` | Whitelisted DKI headline, honest byline, product gallery |
 | 4 | `Benefits` | Three benefit cards, every number computed or published |
 | 5 | `ComparisonTable` | Compact / Extended / Lifting / Jumping + limitation row + buyer's checklist |
-| 6 | `SizeGuide` | Interactive finder: live `slopeDeg()`, recommendation, slope reference table |
-| 7 | `TrustBadges` | In-house guarantee / shipping / security badges |
+| 6 | `SizeGuide` | Interactive finder: Compact-first recommendation, practical spec comparison (no degree math in the UI) |
+| 7 | ~~`TrustBadges`~~ | Removed — duplicated trust claims shown elsewhere (owner instruction; see `claims.md`) |
 | 8 | `ShippingReturns` | 4-step process + policy detail panels |
 | 9 | `Faq` | Accordion + FAQPage JSON-LD (answers from published specs) |
 | 10 | `Footer` | Final CTA, business identity, real policy-page links |
@@ -198,8 +198,8 @@ src/
 │   ├── TrustBlock.tsx           3-cell guarantee row
 │   ├── Benefits.tsx             3 honest benefit cards (was FeatureBento)
 │   ├── ComparisonTable.tsx      options comparison + checklist
-│   ├── SizeGuide.tsx            interactive slope finder
-│   ├── TrustBadges.tsx          in-house badges
+│   ├── SizeGuide.tsx            Compact-first size finder
+│   ├── TrustBadges.tsx          unused — kept for the badge SVGs, not rendered
 │   ├── ShippingReturns.tsx      process + policy panels
 │   ├── Faq.tsx                  accordion + FAQ schema
 │   ├── Footer.tsx               CTA + business identity + links

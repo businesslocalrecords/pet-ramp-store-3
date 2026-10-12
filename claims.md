@@ -60,6 +60,10 @@ The original brief asked to strip all compare-at prices. The owner decided to
 | `HeroSection` hero gallery | SVG-only renderings | Owner supplied real photography from the "manual cured" set | Two scene photos wired through `ASSETS.heroPhotos` with descriptive alt text; the SVG renderings remain the fallback |
 | `ASSETS.heroPhotos` alt text | Generic "PawGrip Pro owner photo N" | Alt text must describe the image — implying ownership would be invented social proof (rule 2) | Descriptive alt per photo ("A hound sitting in the open cargo bay…") |
 | `index.html` preload / og:image / JSON-LD image | `ramp-compact.svg` | SVG is not a renderable social/raster image, and it is no longer the hero's first frame once `heroPhotos` is populated | `/assets/product/manual-cured/ramp-scene-hound-in-suv.jpg` (the new first hero frame) |
+| `SizeGuide` heading + intro | "Find the right size for your vehicle" + computed-slope explanation | Owner instruction: lead with the Compact's popularity and explain the practical difference in plain language, not degrees | "Most owners pick the 62″ Compact" + practical fit copy (see the owner-attested popularity row below) |
+| `SizeGuide` degree math | Live slope readout ("22.8° / 20.1°"), per-card "Slope at {height}″" rows, the slope-by-cargo-height chart table and the degree-labelled ramp diagram | Owner instruction: shoppers decide on fit, not trigonometry | Practical specs only (capacity, ramp weight, open/folded size, best-for vehicles); `slopeDeg()` now feeds only the `trackSizeFinderUsed` analytics payload |
+| `SizeGuide` trust bar | "30-Day Risk-Free Trial / Insured Shipping / Hassle-Free Returns" panel under the finder | Owner instruction: redundant with the announcement bar, the buy box's assurance row and trust block, the ShippingReturns section and the footer | Panel deleted; every policy value is still shown at least once elsewhere |
+| `TrustBadges` | Whole "Shop With Total Confidence" section (three in-house badges + payment strip) | Owner instruction: redundant with the same trust claims elsewhere on the page | Section removed from `pages/index.tsx`; badge SVGs remain in `public/assets/badges/` for future use |
 
 ## "Manual cured" image set — provenance and what is deliberately not displayed
 
@@ -77,7 +81,7 @@ unwired until the underlying conflicts are resolved:
 | `ramp-spec-infographic-62in.jpg` | States "Ramp Weight: 12 lbs"; `RAMP_SIZES[0].rampWeightLb` is 10 lb (and `ramp-detail-10lb-polymer.jpg` says 10 lb — the collage contradicts the set itself) |
 | `ramp-slope-guide.jpg` | "OPTIMAL 18° / MODERATE (23–28°)" contradicts the computed slope model in `offers.ts`'s `slopeDeg()` (22.8° / 20.1° at 24″) — see the "24–28° joint-safe slope" row above |
 | `badge-manufacturer-certified.jpg` | "Manufacturer Certified" / "Certified pet safe materials" is a certification the store cannot evidence; the same class of claim was deleted from `hero-ramp.svg` in V3 |
-| `badge-1-year-warranty.jpg` | "1-year" ≈ `POLICY.warrantyMonths` but "SATISFACTION GUARANTEED" is not the wording of `GUARANTEE_LABEL` ("30-day money-back guarantee"); the in-house badge row in `TrustBadges` already covers this honestly |
+| `badge-1-year-warranty.jpg` | "1-year" ≈ `POLICY.warrantyMonths` but "SATISFACTION GUARANTEED" is not the wording of `GUARANTEE_LABEL` ("30-day money-back guarantee"); the same policy wording already runs in the announcement bar, the buy box and the footer |
 | `ramp-detail-10lb-polymer.jpg` | Marketing copy ("Featherlight", "sturdy polymer construction", "10 LB") with no clean slot; no new spec information beyond `offers.ts` |
 | `ramp-scene-side-view.jpg` | Near-verbatim re-render of the reference ramp's marketing art; using it as product imagery risks Merchant Center imagery rejection and copyright |
 
@@ -93,6 +97,8 @@ owed before a Merchant-Center image submit (LAUNCH_BLOCKERS #2).
 | `$79.99 / $139.99` compare-at | Real pricing decision; see "Approved price-display decision" above |
 | "150 lb / 250 lb rated" | Published ratings for the two published sizes; confirm against the supplier spec sheet (LAUNCH_BLOCKERS #3) |
 | "62″ / 70″ unfolded, 31″ / 35″ folded" | Published dimensions in the size finder and catalog |
-| Slope table (22.8° / 20.1° at 24″) | Arithmetic on the published dimensions: `asin(height / length)` because the ramp is the hypotenuse |
+| Slope table (22.8° / 20.1° at 24″) | Arithmetic on the published dimensions: `asin(height / length)` because the ramp is the hypotenuse — kept in the hero's "about 20–25°" line and the size-finder analytics payload; removed from the size-finder UI per the owner instruction above |
+| "Most owners pick the 62″ Compact … almost every customer who buys one is happy with it" | Owner-attested popularity claim (owner instruction for the size finder). Qualitative — deliberately no percentages or review counts. Owner should sanity-check it against Shopify variant sales before scaling paid traffic; if the Compact is not in fact the top seller, soften the heading back to "Find the right size for your vehicle" |
+| Size-finder slider help text | "Slide the measure of ground-to-bumper height and we will pick auto-select the best size for you." | Owner instruction: explain the picking mechanism instead of restating the height verdict in prose | Static explainer (exact owner wording); the matching card is highlighted live (border + dog icon), and both Select buttons write the shared purchase context |
 | "rubber, non-slip feet", "textured deck", "side rails" | Published product features |
 | "Ships within 1 business day (before 2pm), 2–5 business day delivery" | Store policy in `policy.ts`; confirm operationally (LAUNCH_BLOCKERS) |

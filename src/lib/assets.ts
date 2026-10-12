@@ -76,21 +76,20 @@ export const GATES = {
 
 /* --------------------------------------------------------------------------
    Business identity — Merchant Center / Google Ads require a real,
-   verifiable business on the landing page. These are deliberately OBVIOUS
-   placeholders: a fake address is worse than a missing one.
-   Replace every REPLACE_ value before running paid traffic.
+   verifiable business on the landing page. Owner-supplied values; the
+   Footer's developer banner clears once no field starts with 'REPLACE_'.
    -------------------------------------------------------------------------- */
 
 export const BUSINESS = {
   legalName: 'PawGrip Pro',
-  addressLine1: 'REPLACE_WITH_STREET_ADDRESS',
-  addressLine2: 'REPLACE_WITH_SUITE_OR_UNIT',
-  city: 'REPLACE_WITH_CITY',
-  state: 'REPLACE_WITH_STATE',
-  postalCode: 'REPLACE_WITH_ZIP',
+  addressLine1: '55 Church St',
+  addressLine2: '',
+  city: 'New York',
+  state: 'NY',
+  postalCode: '10007',
   country: 'United States',
   email: 'support@pawgrippro.com',
-  phone: 'REPLACE_WITH_PHONE_NUMBER',
+  phone: '1-800-729-3844',
 } as const;
 
 /** True while any required business field is still an unfilled placeholder. */

@@ -161,7 +161,9 @@ business day" — the conservative default).
 
 ## 14. Payment methods strip
 
-**Where:** `TrustBadges.tsx` payment list (Shop Pay, Apple Pay, PayPal, …).
+**Where:** removed with the `TrustBadges` section (owner instruction — the
+module duplicated trust claims shown elsewhere). The strip listed Shop Pay,
+Apple Pay, PayPal, etc.
 
-**Done when:** the list matches the payment providers actually enabled in
-Shopify Settings → Payments.
+**Done when:** the payment list is re-added — e.g. to the footer — and matches
+the payment providers actually enabled in Shopify Settings → Payments.
