@@ -102,6 +102,14 @@ reason in `claims.md` — add a row before adding a claim. Compare-at prices
 are allowed as a subtle anchor (owner decision) but must be real prices the
 store has charged.
 
+## Untracked working files
+
+The working directory holds material that is deliberately NOT committed
+(`product images/`, `product-photos.pdf`, `tez imagz/`, `screenshots/`,
+`.kilo/`). `UNTRACKED.md` says what each one is, why it stays out of git, and
+what must happen first if you later want to track any of it. Stage files
+explicitly — never `git add -A`, which would sweep all of it in.
+
 ## DKI safety
 
 `src/lib/dki.ts` maps whitelisted URL keywords (`kw_vehicle`, `loc`,
