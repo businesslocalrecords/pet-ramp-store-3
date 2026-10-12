@@ -57,6 +57,34 @@ The original brief asked to strip all compare-at prices. The owner decided to
 | Seeder hero copy | "rated by 2,800+ owners", "94% within 24 hours", "vet-approved", "Made in the USA", "100-day guarantee card" | Invented proof + unverifiable origin | Published specifications + the real 30-day/12-month policy |
 | Seeder chews | "Vet Formulated", "formulated with veterinarians", "Made in the USA" | Unverifiable claims on a regulated category (product also unpublished) | "Advanced Hip & Joint Soft Chews", spec-only copy |
 | Testimonials / VideoProof / UGCGallery | Entire sections | Placeholder narrative presented as real customers/video | `return null` behind `GATES` (asset-gate pattern in `src/lib/assets.ts`) |
+| `HeroSection` hero gallery | SVG-only renderings | Owner supplied real photography from the "manual cured" set | Two scene photos wired through `ASSETS.heroPhotos` with descriptive alt text; the SVG renderings remain the fallback |
+| `ASSETS.heroPhotos` alt text | Generic "PawGrip Pro owner photo N" | Alt text must describe the image — implying ownership would be invented social proof (rule 2) | Descriptive alt per photo ("A hound sitting in the open cargo bay…") |
+| `index.html` preload / og:image / JSON-LD image | `ramp-compact.svg` | SVG is not a renderable social/raster image, and it is no longer the hero's first frame once `heroPhotos` is populated | `/assets/product/manual-cured/ramp-scene-hound-in-suv.jpg` (the new first hero frame) |
+
+## "Manual cured" image set — provenance and what is deliberately not displayed
+
+The owner's `product images/ramp/manual cured/` folder holds 8 Gemini-generated
+images produced from scraped Chewy/PetSafe reference photography
+(`product images/ramp/PetSafe …/`). All 8 are committed to
+`public/assets/product/manual-cured/` (renamed `.jfif` → `.jpg` — identical JPEG
+bytes, avoids MIME ambiguity on the static host). Only the two real scenes are
+displayed, in the hero gallery. The other six bake in text that conflicts with
+the single-sourced specs or the V3 claim clean-up, so they stay stored but
+unwired until the underlying conflicts are resolved:
+
+| Stored file | Why it is not displayed |
+|---|---|
+| `ramp-spec-infographic-62in.jpg` | States "Ramp Weight: 12 lbs"; `RAMP_SIZES[0].rampWeightLb` is 10 lb (and `ramp-detail-10lb-polymer.jpg` says 10 lb — the collage contradicts the set itself) |
+| `ramp-slope-guide.jpg` | "OPTIMAL 18° / MODERATE (23–28°)" contradicts the computed slope model in `offers.ts`'s `slopeDeg()` (22.8° / 20.1° at 24″) — see the "24–28° joint-safe slope" row above |
+| `badge-manufacturer-certified.jpg` | "Manufacturer Certified" / "Certified pet safe materials" is a certification the store cannot evidence; the same class of claim was deleted from `hero-ramp.svg` in V3 |
+| `badge-1-year-warranty.jpg` | "1-year" ≈ `POLICY.warrantyMonths` but "SATISFACTION GUARANTEED" is not the wording of `GUARANTEE_LABEL` ("30-day money-back guarantee"); the in-house badge row in `TrustBadges` already covers this honestly |
+| `ramp-detail-10lb-polymer.jpg` | Marketing copy ("Featherlight", "sturdy polymer construction", "10 LB") with no clean slot; no new spec information beyond `offers.ts` |
+| `ramp-scene-side-view.jpg` | Near-verbatim re-render of the reference ramp's marketing art; using it as product imagery risks Merchant Center imagery rejection and copyright |
+
+Provenance honesty note: the two displayed photos are Gemini re-renders of real
+scenes, not photos of the shipped unit; alt text describes the scene rather than
+claiming ownership. White-background photography of the actual product is still
+owed before a Merchant-Center image submit (LAUNCH_BLOCKERS #2).
 
 ## Deliberately kept (and why)
 

@@ -36,6 +36,14 @@ submittable product images. Owner declined scraping Chewy/PetSafe photos
 (copyright, the brief's rule 5, Merchant Center imagery checks); recorded in
 `claims.md`.
 
+**Progress:** `ASSETS.heroPhotos` now carries two real scenes from the owner's
+Gemini-cured set (`public/assets/product/manual-cured/`), so the hero gallery
+shows photography instead of renderings alone. Six more files from that set are
+stored but deliberately unwired (baked-in claims that conflict with the
+single-sourced specs — see claims.md). The stored set is **not** a substitute
+for product-feed imagery: it re-renders the reference ramp, not the shipped
+unit, so `ASSETS.product.*` still shows the SVG renderings.
+
 **Done when:** `heroPhotos` contains at least one real owner photo and the
 product renderings are replaced by white-background photos of the actual
 ramp (both configurations), with `alt` text in `HeroSection`.

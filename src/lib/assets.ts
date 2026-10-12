@@ -38,10 +38,25 @@ export const ASSETS = {
     secureCheckout: '/assets/badges/secure-checkout.svg',
   },
   /**
-   * Owner-shot photography, used by HeroSection when present. Empty until the
-   * owner supplies real files; the hero falls back to the SVG renderings.
+   * Owner-supplied photography for the hero gallery (takes precedence over the
+   * SVG renderings; see HeroSection). Real scenes re-rendered from the owner's
+   * "manual cured" set — provenance and the reason the other six files stay
+   * stored-but-unwired are recorded in claims.md.
    */
-  heroPhotos: [] as readonly string[],
+  heroPhotos: [
+    {
+      src: '/assets/product/manual-cured/ramp-scene-hound-in-suv.jpg',
+      alt:
+        'A hound sitting in the open cargo bay of a white SUV with the PawGrip Pro foldable dog ramp deployed from the tailgate',
+      label: 'In use',
+    },
+    {
+      src: '/assets/product/manual-cured/ramp-scene-folding-the-ramp.jpg',
+      alt:
+        'A person folding the PawGrip Pro ramp beside an SUV while a dog waits in the cargo bay',
+      label: 'Folds flat',
+    },
+  ] as readonly { src: string; alt: string; label: string }[],
 } as const;
 
 /* --------------------------------------------------------------------------

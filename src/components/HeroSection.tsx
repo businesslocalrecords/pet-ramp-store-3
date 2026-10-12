@@ -16,8 +16,8 @@ interface GalleryFrame {
  *
  * The storefront ships with the original SVG renderings from
  * public/assets/product/ (white background — Merchant Center friendly).
- * When the owner drops real photography into ASSETS.heroPhotos it takes
- * precedence automatically; the renderings stay as the fallback.
+ * The owner photography registered in ASSETS.heroPhotos takes precedence as
+ * the main frame; the renderings remain as the fallback when it is empty.
  */
 const RENDERING_FRAMES: GalleryFrame[] = [
   {
@@ -50,12 +50,12 @@ export const HeroSection: React.FC = () => {
   // mismatch to guard against.
   const [dki] = useState(() => readDkiParams());
 
-  const ownerFrames: GalleryFrame[] = ASSETS.heroPhotos.map((src, i) => ({
-    src,
-    alt: `PawGrip Pro owner photo ${i + 1}`,
-    label: 'Owner photo',
+  const ownerFrames: GalleryFrame[] = ASSETS.heroPhotos.map((photo) => ({
+    src: photo.src,
+    alt: photo.alt,
+    label: photo.label,
   }));
-  const frames: GalleryFrame[] = [...RENDERING_FRAMES, ...ownerFrames];
+  const frames: GalleryFrame[] = [...ownerFrames, ...RENDERING_FRAMES];
   const active = frames[Math.min(activeIndex, frames.length - 1)];
 
   return (

@@ -12,6 +12,29 @@ Static media served from `public/assets/` (referenced as absolute paths, e.g. `/
 | `badges/free-shipping.svg` | Shipping badge | Optional custom badge |
 | `badges/secure-checkout.svg` | Security badge | Optional custom badge |
 
+## `product/manual-cured/` — owner's Gemini-cured image set
+
+Real scenes re-rendered by Gemini from the owner's reference photography
+(`product images/ramp/manual cured/`), renamed `.jfif` → `.jpg` (identical JPEG
+bytes). Displayed on the site:
+
+| File | Used by |
+|------|---------|
+| `ramp-scene-hound-in-suv.jpg` | `ASSETS.heroPhotos` — main hero frame; also the `index.html` preload / og:image / JSON-LD image |
+| `ramp-scene-folding-the-ramp.jpg` | `ASSETS.heroPhotos` — hero gallery |
+
+Stored in the repo but **not displayed** — each bakes in text that conflicts
+with the single-sourced specs (see claims.md, "Manual cured image set"):
+
+| File | Conflict |
+|------|----------|
+| `ramp-spec-infographic-62in.jpg` | "Ramp Weight: 12 lbs" vs `RAMP_SIZES[0].rampWeightLb` = 10 lb |
+| `ramp-slope-guide.jpg` | Slope angles contradict `slopeDeg()` in `offers.ts` |
+| `badge-manufacturer-certified.jpg` | Unverifiable certification claim |
+| `badge-1-year-warranty.jpg` | "Satisfaction guaranteed" ≠ `GUARANTEE_LABEL` wording |
+| `ramp-detail-10lb-polymer.jpg` | Marketing copy, no slot |
+| `ramp-scene-side-view.jpg` | Near-verbatim competitor product art |
+
 Product renderings are **original SVG artwork** — deliberately NOT scraped from Chewy/PetSafe (copyright, the brief's own rule 5, and Merchant Center imagery checks). See `claims.md` for the recorded decision.
 
 ## Swapping in real media
