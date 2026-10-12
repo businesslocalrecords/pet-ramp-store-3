@@ -13,7 +13,7 @@ const steps: Step[] = [
   {
     num: '1',
     title: 'Order in 60 Seconds',
-    desc: `Choose your size, check out securely with Shop Pay, Apple Pay, or card. Orders before ${POLICY.shippingCutoff} on a business day ship the same day.`,
+    desc: 'Choose your size, check out securely with Shop Pay, Apple Pay, or card. Every order ships free, insured and fully tracked.',
     icon: PackageCheck,
   },
   {

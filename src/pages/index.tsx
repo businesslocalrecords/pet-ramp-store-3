@@ -60,11 +60,12 @@ const SectionFallback: React.FC<{ label: string }> = ({ label }) => (
 const Page: React.FC = () => {
   return (
     <div className="min-h-screen bg-white text-stone-900 antialiased selection:bg-blue-200 selection:text-stone-900">
-      {/* Static announcement bar — no coupon codes, no fake countdowns */}
-      <AnnouncementBar />
-
-      {/* Glass header + mobile buy bar */}
+      {/* Glass header — pinned to the top, always visible, follows the scroll */}
       <StickyHeader />
+
+      {/* Static announcement bar — sits under the header and scrolls away with
+          the page (it slides under the pinned header as you scroll) */}
+      <AnnouncementBar />
 
       <main className="mx-auto max-w-screen-lg px-4 pb-24 pt-10 sm:px-6 sm:pt-16">
         <div className="grid grid-cols-1 gap-y-16 lg:grid-cols-12 lg:gap-x-12">

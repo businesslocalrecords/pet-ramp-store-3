@@ -4,7 +4,7 @@
  * RULES
  * -----
  * 1. No component, page, meta tag or seeder description may hardcode a policy
- *    number ("30-day", "1-year", "ships same day", "2–5 business days").
+ *    number ("30-day", "1-year", "5–7 business days").
  *    Import it from here instead. The verification step greps the repo for
  *    stray policy numbers to prove this rule holds.
  * 2. If a value here changes, `public/` policy pages restate it in plain HTML
@@ -22,12 +22,8 @@ export const POLICY = {
   warrantyMonths: 12,
   /** Whether shipping is free on every order. */
   freeShipping: true,
-  /** Orders placed before the cutoff ship within this many business days. */
-  shipsWithinBusinessDays: 1,
-  /** Same-day ship cutoff, local warehouse time. */
-  shippingCutoff: '2pm',
   /** Delivery window quoted at checkout, for the continental US. */
-  deliveryWindow: '2–5 business days',
+  deliveryWindow: '5–7 business days',
   /** Support reply-time promise. */
   supportReply: 'within one business day',
   /** Who pays return shipping: 'store' sends a prepaid label. */
@@ -54,8 +50,3 @@ export const WARRANTY_PRODUCT_LABEL = `${WARRANTY_LABEL} hardware warranty`;
 export const FREE_SHIPPING_LABEL = POLICY.freeShipping
   ? 'Free insured shipping on every order'
   : 'Shipping calculated at checkout';
-
-/** e.g. "Ships within 1 business day (orders before 2pm)" */
-export const SHIPPING_SPEED_LABEL = `Ships within ${POLICY.shipsWithinBusinessDays} business day${
-  POLICY.shipsWithinBusinessDays === 1 ? '' : 's'
-} (orders before ${POLICY.shippingCutoff})`;

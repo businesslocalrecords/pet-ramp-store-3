@@ -46,7 +46,7 @@ const faqs: Faq[] = [
   },
   {
     q: 'How fast is shipping, and where do you ship?',
-    a: `We ship to the continental United States. Orders placed before ${POLICY.shippingCutoff} on a business day leave the same business day, with insured delivery in ${POLICY.deliveryWindow}. You will receive a tracking link by email as soon as your order leaves.`,
+    a: `We ship to the continental United States. Every order ships free, insured and fully tracked, with delivery in ${POLICY.deliveryWindow}. You will receive a tracking link by email as soon as your order leaves.`,
   },
   {
     q: 'Can it be used for trucks with a lift kit?',

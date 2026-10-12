@@ -203,6 +203,10 @@ export const SizeGuide: React.FC = () => {
           );
         })}
       </div>
+
+      {/* The slope-guide chart and the rating badge that used to sit under
+          the cards were removed per owner instruction. Their files moved to
+          public/assets/old-assets/. */}
     </section>
   );
 };

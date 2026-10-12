@@ -47,48 +47,100 @@ The original brief asked to strip all compare-at prices. The owner decided to
 | `hero-ramp.svg` | Floating "Vet Approved / Tested & certified 250 lb / 26° slope" cards baked into the hero image | Unverifiable claims in artwork; 250 lb wrong for the Compact | File deleted; replaced by original product renderings in `public/assets/product/` |
 | `FAQ` | "94% of customers report…", "veterinarians recommend", "static-tested beyond 500 lbs", "2× safety margin" | Invented statistics | Spec-based answers; senior-dog question defers to the visitor's veterinarian |
 | `FAQ` | "ships same business day… 2–5 business days… Canada and UK at checkout" | International shipping not set up | Policy values from `policy.ts`; continental US only |
+| Ship-speed claims across the site | "Ships within 1 business day (orders before 2pm)" / "Ships in 1 business day" / "ship the same day" / the 2pm cutoff, plus the live "In stock · ships in 1 business day" line | Owner instruction: remove every dispatch-speed promise — the operation cannot honour it, and an unkept shipping promise is an ad-network and refund-liability risk | Removed everywhere: hero assurance strip, `TrustBlock` first cell, `StickyMobileBuyBar` stock line, `FAQ` and `ShippingReturns` step 1 copy, the "Dispatch time" section on `/shipping/`. `POLICY.shipsWithinBusinessDays`, `POLICY.shippingCutoff` and `SHIPPING_SPEED_LABEL` deleted; the mobile buy bar's green line now shows the `30-day money-back guarantee` label from `policy.ts` |
+| `POLICY.deliveryWindow` | `'2–5 business days'` | Owner instruction: widen the delivery estimate to a window the carriers actually hit | `'5–7 business days'` — flows to the FAQ answer, the ShippingReturns step-2 title and the hero; `/shipping/` meta, method copy and rate table restated to match |
 | `ComparisonTable` | "PawGrip Pro vs. Cheap Knockoffs" with unverifiable competitor claims | Cannot assert what competitors' products do | Compact / Extended / Lifting / Jumping, with an honest-limitation row and a buyer's checklist |
 | `Tiers` perks | "100-day money-back guarantee" | Policy is 30 days | `30-day money-back guarantee` (from `policy.ts`) |
 | `TrustBlock` | "100-Day Trial", "covered for as long as you own it" | Wrong window; lifetime claim | 30-day trial; 12-month hardware warranty |
 | `index.tsx` | "Lifetime hardware warranty" | No lifetime warranty exists | `WARRANTY_PRODUCT_LABEL` (12-month) |
 | `Footer` | "Join 12,000+ owners", "Lifetime hardware warranty", dead social links | Invented customer count; false warranty term; links went nowhere | Removed; policy-sourced labels; links to real policy pages |
 | `TetherUpsell` | "Crash-Tested Car Safety Tether" | "Crash-tested" overstated what the store can evidence (owner decision) | "Adjustable Car Safety Tether" — Shopify handle unchanged (`crash-tested-adjustable-car-safety-tether`) |
-| `StickyHeader` | Hardcoded `$199 / $149` | Contradicted `offers.ts` | Live tier price + compare-at from the purchase context |
+| `StickyHeader` | Hardcoded `$199 / $149` | Contradicted `offers.ts` | Live tier price + compare-at from the purchase context — **then removed entirely per owner instruction**: a price bubble floating over the page read as a discount popup, and the price is already in the buy box, the size-finder buttons and the mobile sticky buy bar. The header now shows brand + cart count only |
 | Seeder hero copy | "rated by 2,800+ owners", "94% within 24 hours", "vet-approved", "Made in the USA", "100-day guarantee card" | Invented proof + unverifiable origin | Published specifications + the real 30-day/12-month policy |
 | Seeder chews | "Vet Formulated", "formulated with veterinarians", "Made in the USA" | Unverifiable claims on a regulated category (product also unpublished) | "Advanced Hip & Joint Soft Chews", spec-only copy |
 | Testimonials / VideoProof / UGCGallery | Entire sections | Placeholder narrative presented as real customers/video | `return null` behind `GATES` (asset-gate pattern in `src/lib/assets.ts`) |
-| `HeroSection` hero gallery | SVG-only renderings | Owner supplied real photography from the "manual cured" set | Two scene photos wired through `ASSETS.heroPhotos` with descriptive alt text; the SVG renderings remain the fallback |
-| `ASSETS.heroPhotos` alt text | Generic "PawGrip Pro owner photo N" | Alt text must describe the image — implying ownership would be invented social proof (rule 2) | Descriptive alt per photo ("A hound sitting in the open cargo bay…") |
-| `index.html` preload / og:image / JSON-LD image | `ramp-compact.svg` | SVG is not a renderable social/raster image, and it is no longer the hero's first frame once `heroPhotos` is populated | `/assets/product/manual-cured/ramp-scene-hound-in-suv.jpg` (the new first hero frame) |
+| `HeroSection` hero gallery | SVG-only renderings | Owner supplied photography | Hero gallery = the six photos of the owner's revised set via `ASSETS.heroPhotos` (see the provenance rows below); the SVG renderings remain the fallback |
+| `ASSETS.heroPhotos` alt text | Generic "PawGrip Pro owner photo N" | Alt text must describe the image — implying ownership would be invented social proof (rule 2) | Descriptive alt per photo ("A man guiding a large white dog as it walks up…") |
+| `index.html` preload / og:image / JSON-LD image | `ramp-compact.svg`, then `manual-cured/ramp-scene-hound-in-suv.jpg` | SVG is not a renderable social/raster image, and the main hero frame changed with each photo revision | `/assets/product/revised/ramp-scene-dog-walking-up.jpg` — the current first hero frame |
 | `SizeGuide` heading + intro | "Find the right size for your vehicle" + computed-slope explanation | Owner instruction: lead with the Compact's popularity and explain the practical difference in plain language, not degrees | "Most owners pick the 62″ Compact" + practical fit copy (see the owner-attested popularity row below) |
 | `SizeGuide` degree math | Live slope readout ("22.8° / 20.1°"), per-card "Slope at {height}″" rows, the slope-by-cargo-height chart table and the degree-labelled ramp diagram | Owner instruction: shoppers decide on fit, not trigonometry | Practical specs only (capacity, ramp weight, open/folded size, best-for vehicles); `slopeDeg()` now feeds only the `trackSizeFinderUsed` analytics payload |
 | `SizeGuide` trust bar | "30-Day Risk-Free Trial / Insured Shipping / Hassle-Free Returns" panel under the finder | Owner instruction: redundant with the announcement bar, the buy box's assurance row and trust block, the ShippingReturns section and the footer | Panel deleted; every policy value is still shown at least once elsewhere |
 | `TrustBadges` | Whole "Shop With Total Confidence" section (three in-house badges + payment strip) | Owner instruction: redundant with the same trust claims elsewhere on the page | Section removed from `pages/index.tsx`; badge SVGs remain in `public/assets/badges/` for future use |
-
+| `badge-manufacturer-certified.jpg` (manual-cured) | "Manufacturer Certified" / "Certified pet safe materials" | Owner replaced it with an AI-generated badge that drops every certification claim and states only the published Compact rating | `badge-150lb-rated.png` (owner-supplied, in `public/assets/product/manual-cured/`), displayed in the SizeGuide under the size cards; the old file moved to `public/assets/old-assets/`. Deliberately not in the buy box — a flat 150 lb figure next to the selectable 250 lb Extended would misstate the extended product. **Later removed entirely per owner instruction** — the badge and its SizeGuide slot were deleted and the file retired to `old-assets/` (see the "revised photo set" section below) |
+| `ramp-scene-side-view.jpg` (manual-cured) | Stored-but-unwired as a near-verbatim re-render of reference product art (copyright / Merchant Center risk) | Owner reviewed it against the competitor's site, judged it sufficiently different, and chose to keep it | Was displayed as a hero gallery frame ("On the ramp") via `ASSETS.gallery.sideView`; **retired per owner instruction** when the revised photo set landed — the file moved to `public/assets/old-assets/` |
+| `ramp-spec-infographic-62in.jpg` (manual-cured) | Stored-but-unwired: baked-in "Ramp Weight: 12 lbs" contradicts `RAMP_SIZES[0].rampWeightLb` = 10 lb | Owner supplied a corrected version with the 10 lb figure | Corrected `ramp-spec-infographic-62in.png` was displayed as the hero "Specs" frame; **superseded by the revised photo set** (its `4.jfif` collage) — both `.png` and the stale `.jpg` now live in `public/assets/old-assets/` |
+| `ramp-slope-guide.jpg` (manual-cured) | Stored-but-unwired: "OPTIMAL 18° / MODERATE 23–28°" contradicts `slopeDeg()` (22.8° / 20.1° at 24″) and echoed the removed "24–28° joint-safe slope" claim | Owner supplied a corrected version whose bands match the computed model | Corrected `ramp-slope-guide.png` was displayed in the SizeGuide; **removed per owner instruction** — the chart and its slot were deleted and the file retired to `old-assets/` |
+| `HeroSection` gallery — SVG then AI frames | The hero showed the two in-house SVG renderings, then the `ASSETS.aiShots` white-background renderings plus the corrected spec infographic and side view | Owner supplied a full revised photo set (`edited pics/`, files 2–7) | Hero gallery = the six revised photos only (order below); `ASSETS.aiShots`, `gallery.sideView`, `gallery.ratingBadge`, `gallery.slopeGuide` and `gallery.specInfographic` were deleted; the SVG renderings stay registered (`ASSETS.product`) as the fallback when `heroPhotos` is empty |
 ## "Manual cured" image set — provenance and what is deliberately not displayed
 
 The owner's `product images/ramp/manual cured/` folder holds 8 Gemini-generated
 images produced from scraped Chewy/PetSafe reference photography
 (`product images/ramp/PetSafe …/`). All 8 are committed to
 `public/assets/product/manual-cured/` (renamed `.jfif` → `.jpg` — identical JPEG
-bytes, avoids MIME ambiguity on the static host). Only the two real scenes are
-displayed, in the hero gallery. The other six bake in text that conflicts with
-the single-sourced specs or the V3 claim clean-up, so they stay stored but
-unwired until the underlying conflicts are resolved:
+bytes, avoids MIME ambiguity on the static host). **None is displayed anymore:**
+the revised photo set below replaced every frame this set had, and the
+retired files moved to `public/assets/old-assets/` (with the stale
+"12 lbs"/"OPTIMAL 18°" versions that were already there).
+
+Two files from the set were never displayed and stay stored but unwired:
 
 | Stored file | Why it is not displayed |
 |---|---|
-| `ramp-spec-infographic-62in.jpg` | States "Ramp Weight: 12 lbs"; `RAMP_SIZES[0].rampWeightLb` is 10 lb (and `ramp-detail-10lb-polymer.jpg` says 10 lb — the collage contradicts the set itself) |
-| `ramp-slope-guide.jpg` | "OPTIMAL 18° / MODERATE (23–28°)" contradicts the computed slope model in `offers.ts`'s `slopeDeg()` (22.8° / 20.1° at 24″) — see the "24–28° joint-safe slope" row above |
-| `badge-manufacturer-certified.jpg` | "Manufacturer Certified" / "Certified pet safe materials" is a certification the store cannot evidence; the same class of claim was deleted from `hero-ramp.svg` in V3 |
 | `badge-1-year-warranty.jpg` | "1-year" ≈ `POLICY.warrantyMonths` but "SATISFACTION GUARANTEED" is not the wording of `GUARANTEE_LABEL` ("30-day money-back guarantee"); the same policy wording already runs in the announcement bar, the buy box and the footer |
 | `ramp-detail-10lb-polymer.jpg` | Marketing copy ("Featherlight", "sturdy polymer construction", "10 LB") with no clean slot; no new spec information beyond `offers.ts` |
-| `ramp-scene-side-view.jpg` | Near-verbatim re-render of the reference ramp's marketing art; using it as product imagery risks Merchant Center imagery rejection and copyright |
 
-Provenance honesty note: the two displayed photos are Gemini re-renders of real
-scenes, not photos of the shipped unit; alt text describes the scene rather than
-claiming ownership. White-background photography of the actual product is still
-owed before a Merchant-Center image submit (LAUNCH_BLOCKERS #2).
+## The revised photo set — what the hero shows now
+
+The owner revised all the imagery and delivered it in `edited pics/` (JPEG
+bytes in `.jfif` containers, converted to `.jpg` on install), numbered 1–7.
+Number 1 was excluded by instruction; 2–7 are installed under
+`public/assets/product/revised/` and wired as `ASSETS.heroPhotos`, which is
+now the entire hero gallery:
+
+| Frame | Source | File | Alt text (abbreviated) |
+|---|---|---|---|
+| 1 (main) | `6` | `ramp-scene-dog-walking-up.jpg` | A man guiding a large white dog as it walks up the ramp into the cargo area of a white SUV |
+| 2 | `5` | `ramp-scene-deployed-tailgate.jpg` | The ramp deployed from the tailgate of a white SUV with a dog waiting in the cargo area |
+| 3 | `2` | `ramp-studio-three-quarter.jpg` | Studio view of the ramp at a three-quarter angle on a white background |
+| 4 | `fold1` | `ramp-folded-studio.jpg` | Top-down studio view of the ramp folded in half on a white background |
+| 5 | `7` | `ramp-scene-carrying-folded.jpg` | A man carrying the folded ramp beside a white SUV while a dog waits in the cargo area |
+| 6 | `4` | `ramp-spec-collage.jpg` | Specifications collage: 62″ unfolded, 31″ folded, 150 lb capacity, 10 lb ramp weight, textured polymer grip deck |
+
+The frame-4 slot first used `3` (`ramp-folded-top-down.jpg`); the owner
+supplied `fold1` — a cleaner centered top-down of the folded ramp — which
+replaced it, the earlier file retiring to `old-assets/`. Frame labels are
+owner-set benefit captions ("Effortless Walk", "Sturdy Grip", "Quality Build",
+"Compact Fold", "easy to store", "Specs") — they sit under generic published
+features (slope vs lifting, non-slip grip, fold-and-store), so they assert
+nothing new. The hero's main frame is a fixed `aspect-[3/2]` box; the fill-crop
+(`object-cover`) was slicing ~28% off the top and bottom of the two
+white-background studio shots (1024×955). Per owner instruction those two
+frames and the collage render with `fit: 'contain'` in `ASSETS.heroPhotos` —
+nothing cropped, and their white backgrounds match the frame so no letterbox
+bars show. The scene photos keep the fill-crop.
+
+**Order rationale (owner instruction: "an order that is most coherent"):**
+the main frame is the page's core promise — a large dog walking up the ramp
+instead of being lifted — then the same ramp deployed with the dog waiting,
+the clean studio shot of the product, the folded form, the one-hand carry, and
+the spec sheet last as reference. The SUV, man and dog match across frames
+2/5/6, so the gallery reads as one shoot.
+
+**Claim checks on the baked-in content:**
+- The spec collage (`4`) states 62″ unfolded, 31″ folded, 150 lb capacity and
+  10 lb ramp weight — all match `RAMP_SIZES` in `offers.ts`. It brands the
+  product "A-frame folding ramp"; the alt text says the same and the store's
+  naming (`PRODUCT_NAMES`) is unchanged.
+- The collage's material line ("heavy-duty textured polymer", "slip-resistant
+  grip") restates published features already used on the page — no new claim.
+- Life-frame alt text describes only what the photos show; nothing asserts
+  ownership, review counts or veterinary endorsement.
+
+Provenance honesty note: the displayed photos are owner-supplied and show a
+real ramp and a real dog, but they are not photographs of the store's own
+inventory unless the owner confirms it — alt text describes the scene rather
+than claiming ownership. White-background photography of the actual shipped
+unit is still owed before a Merchant Center image submit (LAUNCH_BLOCKERS #2).
 
 ## Deliberately kept (and why)
 
@@ -99,6 +151,6 @@ owed before a Merchant-Center image submit (LAUNCH_BLOCKERS #2).
 | "62″ / 70″ unfolded, 31″ / 35″ folded" | Published dimensions in the size finder and catalog |
 | Slope table (22.8° / 20.1° at 24″) | Arithmetic on the published dimensions: `asin(height / length)` because the ramp is the hypotenuse — kept in the hero's "about 20–25°" line and the size-finder analytics payload; removed from the size-finder UI per the owner instruction above |
 | "Most owners pick the 62″ Compact … almost every customer who buys one is happy with it" | Owner-attested popularity claim (owner instruction for the size finder). Qualitative — deliberately no percentages or review counts. Owner should sanity-check it against Shopify variant sales before scaling paid traffic; if the Compact is not in fact the top seller, soften the heading back to "Find the right size for your vehicle" |
-| Size-finder slider help text | "Slide the measure of ground-to-bumper height and we will pick auto-select the best size for you." | Owner instruction: explain the picking mechanism instead of restating the height verdict in prose | Static explainer (exact owner wording); the matching card is highlighted live (border + dog icon), and both Select buttons write the shared purchase context |
+| Size-finder slider help text | "Slide the measure of ground-to-bumper height and we will pick auto-select the best size for you." — owner wording replaces the height verdict in prose; the matching card is highlighted live (border + dog icon) and both Select buttons write the shared purchase context |
 | "rubber, non-slip feet", "textured deck", "side rails" | Published product features |
 | "Ships within 1 business day (before 2pm), 2–5 business day delivery" | Store policy in `policy.ts`; confirm operationally (LAUNCH_BLOCKERS) |

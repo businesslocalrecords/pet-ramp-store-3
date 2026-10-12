@@ -8,6 +8,8 @@ what would have to happen before it could be committed.
 | Item | What it is | Why it is untracked | Before it could be tracked |
 |---|---|---|---|
 | `product images/` | Owner's source material: the `manual cured/` originals (`.jfif`), scraped reference photos (`PetSafe …/`), the cure/scrape scripts, and leftover Chrome debug-profile folders | Contains copyrighted competitor scrapes, large binaries and browser-profile junk; nothing here is needed to build or run the storefront | Curate: keep only what the site needs, convert photos to `.jpg`/`.webp` under `public/assets/…`, move the scripts to `scripts/` if they should live in the repo, and leave the scrapes and Chrome profiles out |
+| `product images/ramp/ai-output/` | Working drop zone from the previous image batch: `badge-150lb-rated.png` and the corrected infographic / slope guide (all since retired to `public/assets/old-assets/`) plus `spec-infographic-SUPERSEDED.png` | Owner-generated working copies; only the curated, claim-checked versions belong in git | Kept as the working area; nothing new from this batch is needed from it |
+| `edited pics/` | Source of the current hero gallery: the owner's revised images, `.jfif` files numbered 1–7 plus `fold1` (1 excluded by instruction; 2–7 and `fold1` installed under `public/assets/product/revised/`) | Owner-supplied source material; only the curated web-ready versions belong in git | Already done: the used files are converted to `.jpg` in `public/assets/product/revised/`, wired via `ASSETS.heroPhotos`, and claim-checked in `claims.md`; the folder stays as the source area for future revisions |
 | `product-photos.pdf` | PDF of product photography, unreviewed | Large, unreviewed, duplicative until its contents are sorted | Extract the images that will actually be used, convert them, place them under `public/assets/…`, then delete the PDF |
 | `tez imagz/` | `.PNG` images, contents undetermined | Unknown provenance — may be competitor or stock imagery | Review each file; keep only owner-owned or legally usable images, convert to web formats, place under `public/assets/…` |
 | `screenshots/` | QA screenshots from preview checks (`hero-1440.png`, `order-390.png`, …) | Verification output, not source; would add churn on every capture | Keep untracked. Publish-worthy shots can be added to `docs/` deliberately, one at a time |
@@ -24,24 +26,28 @@ Rules of thumb before any of this goes into git:
    `public/assets/product/manual-cured/` was added.
 4. Browser-profile and cache folders are never committed, in any folder.
 
-## Why 6 of the 8 "manual cured" images are in the repo but not on the site
+## What the hero gallery and stored sets look like now
 
-All 8 files from `product images/ramp/manual cured/` are committed (renamed
-`.jfif` → `.jpg`) under `public/assets/product/manual-cured/`, and the push to
-GitHub includes them. Only the two scene photos are displayed — the hero
-gallery. The other six bake in text that conflicts with this repo's
-single-sourced specs, so they are stored but deliberately not wired into any
-section. Full reasoning lives in `claims.md` (section "Manual cured image
-set"); the short version:
+The hero gallery is the owner's **revised photo set**: `edited pics/` files 2–7
+(file 1 excluded by instruction), converted `.jfif` → `.jpg`, installed under
+`public/assets/product/revised/` and wired as `ASSETS.heroPhotos` — the whole
+gallery, ordered as a narrative (dog walking up the ramp → deployed at the
+tailgate → studio shot → folded form → one-hand carry → spec collage). Frame 1
+is also the `index.html` preload / og:image / JSON-LD image.
+
+Every earlier set is retired from display: the two scene photos, the side view,
+the rating badge, the corrected infographic and slope guide, and the three AI
+white-background renderings all moved to `public/assets/old-assets/` (with the
+stale "12 lbs" / "OPTIMAL 18°" versions that were already there). The
+"manual cured" set keeps only two stored-but-unwired files:
 
 | Stored file | Why it is not displayed |
 |---|---|
-| `ramp-spec-infographic-62in.jpg` | States "Ramp Weight: 12 lbs" — `RAMP_SIZES` says 10 lb (and `ramp-detail-10lb-polymer.jpg` itself says 10 lb, so the collage contradicts the set) |
-| `ramp-slope-guide.jpg` | "OPTIMAL 18° / MODERATE 23–28°" chart contradicts the computed slope model (`slopeDeg()`) that `claims.md` protects |
-| `badge-manufacturer-certified.jpg` | "Manufacturer Certified" — a certification the store cannot evidence; the same class of claim was deleted from the hero artwork in V3 |
 | `badge-1-year-warranty.jpg` | "1-year" ≈ the warranty term, but "SATISFACTION GUARANTEED" is not the wording of `GUARANTEE_LABEL` |
 | `ramp-detail-10lb-polymer.jpg` | Marketing copy, no slot on the page; adds no spec information beyond `offers.ts` |
-| `ramp-scene-side-view.jpg` | Near-verbatim re-render of the reference ramp's marketing art — copyright and Merchant Center imagery risk |
+
+Full reasoning lives in `claims.md` (sections "Manual cured image set" and
+"The revised photo set").
 
 Provenance note: the two displayed photos are Gemini re-renders of real
 scenes, not photos of the shipped unit, and their alt text describes the scene

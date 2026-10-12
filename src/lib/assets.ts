@@ -21,12 +21,14 @@
 /* --------------------------------------------------------------------------
    Static assets — original SVG renderings on a pure white background.
    The owner declined scraping Chewy/PetSafe photography (copyright + the
-   brief's own rule 5 + Merchant Center imagery checks). Real photos slot in
-   through ASSETS.heroPhotos; see claims.md for the recorded decision.
+   brief's own rule 5 + Merchant Center imagery checks). The hero gallery is
+   fed by ASSETS.heroPhotos — the owner's revised photo set — and the SVGs
+   remain the fallback. Provenance is recorded in claims.md.
    -------------------------------------------------------------------------- */
 
 export const ASSETS = {
-  /** Product renderings, one per ramp configuration. */
+  /** Product renderings, one per ramp configuration. Fallback gallery frames
+      now that ASSETS.heroPhotos leads the hero. */
   product: {
     standard: '/assets/product/ramp-compact.svg',
     extended: '/assets/product/ramp-extended.svg',
@@ -38,25 +40,60 @@ export const ASSETS = {
     secureCheckout: '/assets/badges/secure-checkout.svg',
   },
   /**
-   * Owner-supplied photography for the hero gallery (takes precedence over the
-   * SVG renderings; see HeroSection). Real scenes re-rendered from the owner's
-   * "manual cured" set — provenance and the reason the other six files stay
-   * stored-but-unwired are recorded in claims.md.
+   * Owner-supplied photography for the hero gallery — the revised set in
+   * public/assets/product/revised/ (converted .jfif → .jpg). Ordered as a
+   * narrative: the dog walking up the ramp, the ramp deployed at the tailgate,
+   * the product itself, folded and carried, then the spec sheet. Provenance
+   * per file is recorded in claims.md.
+   *
+   * `fit: 'contain'` shows the whole image with no cropping — used by the two
+   * white-background studio shots (the fixed 3:2 frame would otherwise slice
+   * ~28% off their top and bottom — they are 1024×955) and by the spec
+   * collage, whose baked-in text runs to the frame edge. Their backgrounds
+   * match the white frame, so contain shows no letterbox bars. The scene
+   * photos keep the default fill-crop. Every other frame crops to fill.
    */
   heroPhotos: [
     {
-      src: '/assets/product/manual-cured/ramp-scene-hound-in-suv.jpg',
+      src: '/assets/product/revised/ramp-scene-dog-walking-up.jpg',
       alt:
-        'A hound sitting in the open cargo bay of a white SUV with the PawGrip Pro foldable dog ramp deployed from the tailgate',
-      label: 'In use',
+        'A man guiding a large white dog as it walks up the PawGrip Pro foldable dog ramp into the cargo area of a white SUV',
+      label: 'Effortless Walk',
     },
     {
-      src: '/assets/product/manual-cured/ramp-scene-folding-the-ramp.jpg',
+      src: '/assets/product/revised/ramp-scene-deployed-tailgate.jpg',
       alt:
-        'A person folding the PawGrip Pro ramp beside an SUV while a dog waits in the cargo bay',
-      label: 'Folds flat',
+        'The PawGrip Pro foldable dog ramp deployed from the tailgate of a white SUV with a dog waiting in the cargo area',
+      label: 'Sturdy Grip',
     },
-  ] as readonly { src: string; alt: string; label: string }[],
+    {
+      src: '/assets/product/revised/ramp-studio-three-quarter.jpg',
+      alt:
+        'Studio view of the PawGrip Pro foldable dog car ramp at a three-quarter angle on a white background',
+      label: 'Quality Build',
+      fit: 'contain',
+    },
+    {
+      src: '/assets/product/revised/ramp-folded-studio.jpg',
+      alt:
+        'Top-down studio view of the PawGrip Pro foldable dog car ramp folded in half on a white background',
+      label: 'Compact Fold',
+      fit: 'contain',
+    },
+    {
+      src: '/assets/product/revised/ramp-scene-carrying-folded.jpg',
+      alt:
+        'A man carrying the folded PawGrip Pro ramp beside a white SUV while a dog waits in the cargo area',
+      label: 'easy to store',
+    },
+    {
+      src: '/assets/product/revised/ramp-spec-collage.jpg',
+      alt:
+        'Specifications collage for the A-frame folding ramp: 62 inches unfolded, 31 inches folded, 150 lb weight capacity, 10 lb ramp weight, and a textured polymer grip deck',
+      label: 'Specs',
+      fit: 'contain',
+    },
+  ] as readonly { src: string; alt: string; label: string; fit?: 'cover' | 'contain' }[],
 } as const;
 
 /* --------------------------------------------------------------------------

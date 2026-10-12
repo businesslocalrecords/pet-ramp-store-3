@@ -1,25 +1,26 @@
 import React, { useState } from 'react';
-import { Truck, RefreshCw, ShieldCheck } from 'lucide-react';
+import { RefreshCw, ShieldCheck } from 'lucide-react';
 import { Byline } from './Byline';
 import { readDkiParams } from '../lib/dki';
 import { ASSETS } from '../lib/assets';
-import { POLICY, RETURN_WINDOW_LABEL, WARRANTY_LABEL } from '../lib/policy';
+import { RETURN_WINDOW_LABEL, WARRANTY_LABEL } from '../lib/policy';
 
 interface GalleryFrame {
   src: string;
   alt: string;
   label: string;
+  /** 'contain' shows the whole image (no crop) — see ASSETS.heroPhotos. */
+  fit?: 'cover' | 'contain';
 }
 
 /**
- * Gallery frames.
- *
- * The storefront ships with the original SVG renderings from
+ * Fallback gallery frames — the original SVG renderings from
  * public/assets/product/ (white background — Merchant Center friendly).
- * The owner photography registered in ASSETS.heroPhotos takes precedence as
- * the main frame; the renderings remain as the fallback when it is empty.
+ * Used only when ASSETS.heroPhotos is empty; it currently carries the
+ * owner's revised six-photo set. Provenance per frame is recorded in
+ * claims.md.
  */
-const RENDERING_FRAMES: GalleryFrame[] = [
+const FALLBACK_FRAMES: GalleryFrame[] = [
   {
     src: ASSETS.product.standard,
     alt: 'Compact 62-inch configuration of the PawGrip Pro foldable dog car ramp, side view',
@@ -54,8 +55,10 @@ export const HeroSection: React.FC = () => {
     src: photo.src,
     alt: photo.alt,
     label: photo.label,
+    fit: photo.fit,
   }));
-  const frames: GalleryFrame[] = [...ownerFrames, ...RENDERING_FRAMES];
+  const frames: GalleryFrame[] =
+    ownerFrames.length > 0 ? ownerFrames : FALLBACK_FRAMES;
   const active = frames[Math.min(activeIndex, frames.length - 1)];
 
   return (
@@ -92,7 +95,9 @@ export const HeroSection: React.FC = () => {
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              className="h-full w-full object-cover"
+              className={`h-full w-full bg-white ${
+                active.fit === 'contain' ? 'object-contain' : 'object-cover'
+              }`}
             />
           </div>
 
@@ -103,10 +108,6 @@ export const HeroSection: React.FC = () => {
 
           {/* In-image assurance strip — all values from lib/policy.ts */}
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-5 bg-gradient-to-t from-stone-900/70 to-transparent px-4 py-3.5 text-[11px] font-semibold text-white">
-            <span className="flex items-center gap-1.5">
-              <Truck className="h-3.5 w-3.5" aria-hidden="true" /> Ships within{' '}
-              {POLICY.shipsWithinBusinessDays} business day
-            </span>
             <span className="flex items-center gap-1.5">
               <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" /> {RETURN_WINDOW_LABEL}{' '}
               returns
