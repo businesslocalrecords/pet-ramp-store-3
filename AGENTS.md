@@ -38,8 +38,8 @@ Node 22 / npm 11 (pinned in `netlify.toml` and matched to local tooling).
 src/
 ├── lib/
 │   ├── policy.ts              SINGLE SOURCE: every policy number (30-day,
-│   │                          12-month, ships-in-1-business-day, 2–5 day
-│   │                          delivery, support reply time, who pays returns)
+│   │                          12-month, 5–7 business-day delivery, support
+│   │                          reply time, who pays returns)
 │   ├── assets.ts              SINGLE SOURCE: asset paths, content GATES,
 │   │                          BUSINESS identity, founder-note placeholder
 │   ├── offers.ts              SINGLE SOURCE: tiers/prices/compare-at,
@@ -70,7 +70,7 @@ scripts/shopify-seed.mjs       Admin API catalog seeder (idempotent)
 ## The four single-source rules
 
 1. **Policy numbers** come from `src/lib/policy.ts`. Never hardcode
-   "30-day", "1-year", "ships same day" in a component or page. Static
+   "30-day", "1-year", "5–7 business days" in a component or page. Static
    `public/` pages cannot import TS — they restate the values with an HTML
    comment saying they mirror `policy.ts`.
 2. **Prices/sizes/specs** come from `src/lib/offers.ts`
@@ -110,8 +110,8 @@ store has charged.
 ## Untracked working files
 
 The working directory holds material that is deliberately NOT committed
-(`product images/`, `product-photos.pdf`, `tez imagz/`, `screenshots/`,
-`.kilo/`). `UNTRACKED.md` says what each one is, why it stays out of git, and
+(`edited pics/`, `product images/`, `product-photos.pdf`, `tez imagz/`,
+`screenshots/`, `.kilo/`). `UNTRACKED.md` says what each one is, why it stays out of git, and
 what must happen first if you later want to track any of it. Stage files
 explicitly — never `git add -A`, which would sweep all of it in.
 
