@@ -6,11 +6,13 @@ obvious and wrong often enough.
 
 ## The two-directory trap
 
-There are two copies of this project on this machine:
+There are three copies of this project on this machine:
 
 - **`pet-ramp-store`** — prototype 1, FROZEN. The VS Code window usually has
   this one open. **Do not edit it** unless explicitly told to.
-- **`pet-ramp-store-2`** — prototype 2, the live work. All edits, builds and
+- **`pet-ramp-store-2`** — prototype 2, superseded. Do not target it for this
+  launch.
+- **`pet-ramp-store-3`** — prototype 3, the live work. All edits, builds and
   git commands target this directory. Verify `pwd` before any command.
 
 ## Commands
@@ -24,6 +26,8 @@ npm run preview -- --port 4173 --host 127.0.0.1
 node scripts/shopify-seed.mjs --dry-run   # preview catalog, no credentials
 npm run shopify:seed           # LIVE — mutates the Shopify store
 npm run shopify:verify         # re-reads the store and compares
+npm run shopify:discounts:dry  # preview package discount setup, no writes
+npm run shopify:discounts:apply # LIVE — creates Shopify bundle discount codes
 ```
 
 Node 22 / npm 11 (pinned in `netlify.toml` and matched to local tooling).
@@ -42,6 +46,7 @@ src/
 │   │                          product names, add-on prices, RAMP_SIZES,
 │   │                          slopeDeg()/recommendSize(), bundleSavings(),
 │   │                          money()/formatMoney(), PRODUCT_HANDLES
+│   ├── bundle-discounts.json  Shopify product handles + bundle discount codes
 │   ├── shopify.ts             Storefront API client (products, stock, cart)
 │   ├── cart.tsx / cart-context.ts     CartProvider + localStorage cart
 │   ├── purchase-provider.tsx  SINGLE buy() for both CTAs; size→variant
@@ -119,14 +124,15 @@ string interpolation of URL data.
 
 ## Purchase flow notes
 
-- `buy()` writes ramp → mat → tether in sequence, fires `add_to_cart` +
-  `begin_checkout` + dataLayer with the real line prices, then redirects to
-  the Shopify checkout URL with gclid/utm forwarded (`appendAttribution`).
+- `buy()` creates a fresh cart with ramp → mat → tether lines, applies the
+  selected package code from `bundle-discounts.json`, verifies Shopify's
+  returned discount and total, then redirects with gclid/utm forwarded.
 - Size selection (`setRampSize`) resolves the Shopify variant by title via
   `RAMP_VARIANT_MATCHERS`; the Extended variant carries a $40 delta applied
   to `rampPrice` and the live `total`.
-- Coupon `RAMP20` was removed. Discounts now come only from real compare-at
-  anchors and live-computed bundle savings.
+- Coupon `RAMP20` was removed. Bundle codes are `PGRIPMAT5` and
+  `PGRIPKIT3498`; the Admin script requires `write_discounts` to create them.
+  `read_discounts` allows it to inspect and reconcile existing codes.
 - Purchase conversions belong to the Shopify Customer Events custom pixel —
   the app never sees the thank-you page.
 

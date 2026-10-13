@@ -6,12 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "oxlint --deny-warnings src scripts vite.config.ts",
     "preview": "vite preview",
     "shopify:seed": "node scripts/shopify-seed.mjs",
     "shopify:seed:dry": "node scripts/shopify-seed.mjs --dry-run",
     "shopify:verify": "node scripts/shopify-seed.mjs --verify",
-    "shopify:purge": "node scripts/shopify-seed.mjs --purge"
+    "shopify:purge": "node scripts/shopify-seed.mjs --purge",
+    "shopify:discounts:dry": "node scripts/shopify-bundle-discounts.mjs --dry-run",
+    "shopify:discounts:apply": "node scripts/shopify-bundle-discounts.mjs --apply"
   },
   "dependencies": {
     "lucide-react": "^1.55.0",

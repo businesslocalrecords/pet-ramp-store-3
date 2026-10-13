@@ -1,0 +1,23 @@
+{
+  "productHandles": {
+    "heroRamp": "premium-foldable-dog-car-ramp",
+    "tractionMat": "heavy-duty-traction-mat-upgrade-2-pack",
+    "carTether": "crash-tested-adjustable-car-safety-tether",
+    "bedSteps": "orthopedic-foam-bed-steps",
+    "jointChews": "advanced-hip-joint-soft-chews"
+  },
+  "discounts": {
+    "two": {
+      "code": "PGRIPMAT5",
+      "amount": "5.00",
+      "minimumSubtotal": "94.99",
+      "productKeys": ["heroRamp", "tractionMat"]
+    },
+    "three": {
+      "code": "PGRIPKIT3498",
+      "amount": "34.98",
+      "minimumSubtotal": "194.97",
+      "productKeys": ["heroRamp", "tractionMat", "carTether"]
+    }
+  }
+}

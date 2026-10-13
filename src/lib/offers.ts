@@ -27,6 +27,14 @@
  */
 
 import { GUARANTEE_LABEL } from './policy';
+import shopifyCatalog from './bundle-discounts.json';
+
+export const BUNDLE_DISCOUNTS = shopifyCatalog.discounts;
+
+export function getBundleDiscount(tierId: string) {
+  if (tierId === 'two' || tierId === 'three') return BUNDLE_DISCOUNTS[tierId];
+  return null;
+}
 
 export interface OfferTier {
   id: string;
@@ -284,13 +292,7 @@ export const RAMP_VARIANT_MATCHERS: Record<string, RegExp> = {
    but its handle deliberately stays the same so existing cart links,
    the seeder's idempotency and any saved carts keep working.
    -------------------------------------------------------------------------- */
-export const PRODUCT_HANDLES = {
-  heroRamp: 'premium-foldable-dog-car-ramp',
-  tractionMat: 'heavy-duty-traction-mat-upgrade-2-pack',
-  carTether: 'crash-tested-adjustable-car-safety-tether',
-  bedSteps: 'orthopedic-foam-bed-steps',
-  jointChews: 'advanced-hip-joint-soft-chews',
-} as const;
+export const PRODUCT_HANDLES = shopifyCatalog.productHandles;
 
 /** Collection handles the storefront can pull from. */
 export const COLLECTION_HANDLES = {

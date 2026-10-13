@@ -170,3 +170,24 @@ Apple Pay, PayPal, etc.
 
 **Done when:** the payment list is re-added — e.g. to the footer — and matches
 the payment providers actually enabled in Shopify Settings → Payments.
+
+## 15. Bundle discounts
+
+**Where:** `src/lib/bundle-discounts.json`, `src/lib/purchase-provider.tsx`,
+and `scripts/shopify-bundle-discounts.mjs`.
+
+**Status:** both bundle codes are configured and verified in Shopify. The
+storefront passes the selected code to Shopify and blocks checkout unless
+Shopify applies it and returns the advertised total. The installed app has
+`write_discounts`; `read_discounts` is not currently granted, so the Admin
+script cannot inspect existing codes before updating them.
+
+**Discounts:** `PGRIPMAT5` takes $5.00 off eligible ramp and mat items when
+their cart subtotal is at least $94.99. `PGRIPKIT3498` takes $34.98 off the
+full kit when the eligible cart subtotal is at least $194.97. Both are
+product-restricted, non-stackable codes. Storefront tests returned totals of
+$89.99 and $159.99 respectively.
+
+**Done:** both codes were created or corrected and both bundle carts returned
+their advertised totals. Grant `read_discounts` if future Admin-script runs
+need to inspect or reconcile existing discount records.

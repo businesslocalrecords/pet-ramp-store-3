@@ -65,10 +65,13 @@ export const BuyBox: React.FC = () => {
    */
   const variantsLoaded = rampVariants.length > 0;
   const sizeAvailable = (sizeId: string): boolean => {
-    if (!variantsLoaded) return true; // still loading — do not block prematurely
-    return rampVariants.some((v) => RAMP_VARIANT_MATCHERS[sizeId].test(v.title));
+    if (!variantsLoaded) return false;
+    return rampVariants.some(
+      (v) => RAMP_VARIANT_MATCHERS[sizeId].test(v.title) && v.availableForSale
+    );
   };
   const extendedAvailable = sizeAvailable('extended');
+  const anyRampAvailable = rampVariants.some((variant) => variant.availableForSale);
 
   return (
     <div>
@@ -80,12 +83,16 @@ export const BuyBox: React.FC = () => {
       {/* Sharp header — stock status in Chewy-order green */}
       <div className="flex items-end justify-between border-b border-gray-200 py-4">
         <h3 className="text-lg font-bold tracking-tight text-gray-900">Select Package</h3>
-        {stock !== null && stock > 0 ? (
+        {variantsLoaded && !anyRampAvailable ? (
+          <span className="text-sm font-bold text-red-700">Out of stock</span>
+        ) : stock !== null && stock > 0 ? (
           <span className="text-sm font-bold text-[#008C3A]">
             {stock < 20 ? `Only ${stock} left` : 'In Stock'}
           </span>
+        ) : anyRampAvailable ? (
+          <span className="text-sm font-bold text-[#008C3A]">Available</span>
         ) : (
-          <span className="text-sm font-bold text-[#008C3A]">In Stock</span>
+          <span className="text-sm font-medium text-gray-500">Checking availability</span>
         )}
       </div>
 
@@ -190,7 +197,7 @@ export const BuyBox: React.FC = () => {
           <FlatBuyButton
             price={total}
             loading={buying || loading}
-            disabled={rampVariants.length === 0}
+            disabled={!sizeAvailable(rampSize.id)}
             onClick={buy}
           />
 

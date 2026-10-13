@@ -53,6 +53,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     await loadCart();
   }, [loadCart]);
 
+  const startCheckout = useCallback(async (lines: CartLine[], discountCodes: string[] = []) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const checkoutCart = await createCart(lines, discountCodes);
+      localStorage.setItem(CART_ID_KEY, checkoutCart.id);
+      setCart(checkoutCart);
+      return checkoutCart;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create checkout cart');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const addItem = useCallback<CartContextValue['addItem']>(
     async (merchandiseId, quantity = 1, attributes) => {
       let currentCart = cart;
@@ -137,6 +153,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         cart,
         loading,
         error,
+        startCheckout,
         addItem,
         updateQuantity,
         removeItem,

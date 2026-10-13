@@ -205,6 +205,7 @@ export interface Cart {
   id: string;
   checkoutUrl: string;
   totalQuantity: number;
+  discountCodes?: { code: string; applicable: boolean }[];
   cost: {
     totalAmount: { amount: string; currencyCode: string };
     subtotalAmount: { amount: string; currencyCode: string };
@@ -233,7 +234,7 @@ export interface Cart {
 /**
  * Create a new cart.
  */
-export async function createCart(lines: CartLine[] = []): Promise<Cart> {
+export async function createCart(lines: CartLine[] = [], discountCodes: string[] = []): Promise<Cart> {
   const query = `
     mutation CartCreate($input: CartInput) {
       cartCreate(input: $input) {
@@ -241,6 +242,7 @@ export async function createCart(lines: CartLine[] = []): Promise<Cart> {
           id
           checkoutUrl
           totalQuantity
+          discountCodes { code applicable }
           cost {
             totalAmount { amount currencyCode }
             subtotalAmount { amount currencyCode }
@@ -254,10 +256,12 @@ export async function createCart(lines: CartLine[] = []): Promise<Cart> {
                 quantity
                 cost { totalAmount { amount currencyCode } }
                 merchandise {
-                  id
-                  title
-                  product { title handle }
-                  selectedOptions { name value }
+                  ... on ProductVariant {
+                    id
+                    title
+                    product { title handle }
+                    selectedOptions { name value }
+                  }
                 }
               }
             }
@@ -276,7 +280,7 @@ export async function createCart(lines: CartLine[] = []): Promise<Cart> {
     },
     body: JSON.stringify({
       query,
-      variables: { input: { lines } },
+      variables: { input: { lines, discountCodes } },
     }),
   });
 
@@ -318,10 +322,12 @@ export async function addToCart(cartId: string, lines: CartLine[]): Promise<Cart
                 quantity
                 cost { totalAmount { amount currencyCode } }
                 merchandise {
-                  id
-                  title
-                  product { title handle }
-                  selectedOptions { name value }
+                  ... on ProductVariant {
+                    id
+                    title
+                    product { title handle }
+                    selectedOptions { name value }
+                  }
                 }
               }
             }
@@ -381,10 +387,12 @@ export async function getCart(cartId: string): Promise<Cart | null> {
               quantity
               cost { totalAmount { amount currencyCode } }
               merchandise {
-                id
-                title
-                product { title handle }
-                selectedOptions { name value }
+                ... on ProductVariant {
+                  id
+                  title
+                  product { title handle }
+                  selectedOptions { name value }
+                }
               }
             }
           }
@@ -437,10 +445,12 @@ export async function updateCartLines(cartId: string, lines: { id: string; quant
                 quantity
                 cost { totalAmount { amount currencyCode } }
                 merchandise {
-                  id
-                  title
-                  product { title handle }
-                  selectedOptions { name value }
+                  ... on ProductVariant {
+                    id
+                    title
+                    product { title handle }
+                    selectedOptions { name value }
+                  }
                 }
               }
             }
@@ -499,10 +509,12 @@ export async function removeFromCart(cartId: string, lineIds: string[]): Promise
                 quantity
                 cost { totalAmount { amount currencyCode } }
                 merchandise {
-                  id
-                  title
-                  product { title handle }
-                  selectedOptions { name value }
+                  ... on ProductVariant {
+                    id
+                    title
+                    product { title handle }
+                    selectedOptions { name value }
+                  }
                 }
               }
             }

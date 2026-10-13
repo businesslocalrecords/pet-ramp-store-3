@@ -10,9 +10,9 @@ import {
   DEFAULT_RAMP_SIZE_ID,
   RAMP_VARIANT_MATCHERS,
   PRODUCT_HANDLES,
-  PRODUCT_NAMES,
   ADDON_PRICES,
   money,
+  getBundleDiscount,
 } from './offers';
 import { PurchaseContext, type PurchaseContextValue } from './purchase-context';
 
@@ -37,7 +37,7 @@ type Variant = ProductVariantEdge['node'];
  *   delta, applied to the ramp line price and the live total.
  */
 export function PurchaseProvider({ children }: { children: ReactNode }) {
-  const { addItem, loading: cartLoading, checkoutUrl } = useCart();
+  const { startCheckout, loading: cartLoading } = useCart();
 
   const [selectedId, setSelectedId] = useState(DEFAULT_TIER_ID);
   const [rampSizeId, setRampSizeId] = useState(DEFAULT_RAMP_SIZE_ID);
@@ -67,11 +67,11 @@ export function PurchaseProvider({ children }: { children: ReactNode }) {
         if (ramp) setRampVariants(ramp.variants.edges.map((e) => e.node));
         if (mat) {
           const variants = mat.variants.edges.map((e) => e.node);
-          setMatVariant(variants.find((v) => v.availableForSale) ?? variants[0] ?? null);
+          setMatVariant(variants.find((v) => v.availableForSale) ?? null);
         }
         if (tether) {
           const variants = tether.variants.edges.map((e) => e.node);
-          setTetherVariant(variants.find((v) => v.availableForSale) ?? variants[0] ?? null);
+          setTetherVariant(variants.find((v) => v.availableForSale) ?? null);
         }
         setStock(stockLevel);
       } catch (err) {
@@ -88,35 +88,24 @@ export function PurchaseProvider({ children }: { children: ReactNode }) {
   const tier = getTier(selectedId);
   const rampSize = getRampSize(rampSizeId);
 
-  /**
-   * The Shopify variant that fulfils the selected size. Matched on the
-   * variant title via RAMP_VARIANT_MATCHERS; falls back to the first
-   * purchasable variant so a store that only has the Standard variant still
-   * checks out (the size row then shows the honest unavailable note).
-   */
+  /** The exact available Shopify variant that fulfils the selected size. */
   const rampVariant = useMemo<Variant | null>(() => {
     if (rampVariants.length === 0) return null;
     const matcher = RAMP_VARIANT_MATCHERS[rampSize.id] ?? RAMP_VARIANT_MATCHERS.standard;
-    return (
-      rampVariants.find((v) => matcher.test(v.title)) ??
-      rampVariants.find((v) => v.availableForSale) ??
-      rampVariants[0] ??
-      null
-    );
+    return rampVariants.find((v) => matcher.test(v.title) && v.availableForSale) ?? null;
   }, [rampVariants, rampSize.id]);
 
   /** Ramp line price for the selected bundle + size. */
-  const rampPrice = money(tier.price + rampSize.priceDelta);
+  const rampUnits = tier.id === 'three' ? 2 : 1;
+  const rampPrice = money(tier.price + rampSize.priceDelta * rampUnits);
 
   /**
-   * Whether the selected size can actually be fulfilled by a loaded variant.
-   * Guards buy(): a size without a matching variant must fail loudly rather
-   * than silently substitute a cheaper variant at the size's price.
+   * Whether an exact available variant for the selected size has loaded.
    */
   const sizeFulfillable = useMemo(() => {
-    if (rampVariants.length === 0) return true; // storefront not loaded yet
+    if (rampVariants.length === 0) return false;
     const matcher = RAMP_VARIANT_MATCHERS[rampSize.id] ?? RAMP_VARIANT_MATCHERS.standard;
-    return rampVariants.some((v) => matcher.test(v.title));
+    return rampVariants.some((v) => matcher.test(v.title) && v.availableForSale);
   }, [rampVariants, rampSize.id]);
 
   /**
@@ -138,73 +127,105 @@ export function PurchaseProvider({ children }: { children: ReactNode }) {
   const savingsPercent = Math.round((1 - tier.price / tier.compareAt) * 100);
 
   const buy = useCallback(async () => {
-    const units = tier.id === 'three' ? 2 : 1;
     const chosen = rampVariant;
-    const rampLineName = `${PRODUCT_NAMES.ramp} — ${rampSize.tierName} (${rampSize.lengthIn}″)`;
+    const bundleDiscount = getBundleDiscount(tier.id);
 
-    if (!chosen) {
-      setError('Checkout is temporarily unavailable. Please try again in a moment.');
+    if (loading || cartLoading) {
+      setError('Checkout is still loading. Please try again in a moment.');
       return;
     }
     if (!sizeFulfillable) {
       setError(
-        `The ${rampSize.name} (${rampSize.lengthIn}″) is temporarily unavailable — choose the Compact or contact us and we will sort it out.`
+        `The ${rampSize.name} (${rampSize.lengthIn}″) is unavailable — choose another available size or try again later.`
       );
+      return;
+    }
+    if (!chosen) {
+      setError('Checkout is temporarily unavailable. Please try again in a moment.');
+      return;
+    }
+    if (tier.includesMat && !matVariant) {
+      setError('The traction mat in this package is unavailable. Please try again later.');
+      return;
+    }
+    if (tier.includesTether && !tetherVariant) {
+      setError('The safety tether in this package is unavailable. Please try again later.');
       return;
     }
 
     setBuying(true);
     setError(null);
 
-    // Single ordered list of every line we intend to add, used for both the
-    // cart write and the conversion events so analytics matches the order.
-    const lines: { variant: Variant; qty: number; name: string; price: number; attribute?: string }[] = [
-      { variant: chosen, qty: units, name: rampLineName, price: rampPrice },
-    ];    if (bumpActive && matVariant) {
-      lines.push({ variant: matVariant, qty: 1, name: `${PRODUCT_NAMES.mat} (order bump)`, price: BUMP_PRICE });
+    const cartLines = [{ merchandiseId: chosen.id, quantity: rampUnits }];
+    if ((tier.includesMat || bumpActive) && matVariant) {
+      cartLines.push({ merchandiseId: matVariant.id, quantity: 1 });
     }
-    if (tetherActive && tetherVariant) {
-      lines.push({ variant: tetherVariant, qty: 1, name: `${PRODUCT_NAMES.tether} (upsell)`, price: ADDON_PRICES.carTether });
+    if ((tier.includesTether || tetherActive) && tetherVariant) {
+      cartLines.push({ merchandiseId: tetherVariant.id, quantity: 1 });
     }
 
     try {
-      // Atomic-ish sequential write: ramp, then the add-ons
-      await addItem(chosen.id, units);
-      if (bumpActive && matVariant) {
-        await addItem(matVariant.id, 1, [{ key: '_order_bump', value: 'traction-mat' }]);
-      }
-      if (tetherActive && tetherVariant) {
-        await addItem(tetherVariant.id, 1, [{ key: '_post_purchase_upsell', value: 'car-safety-tether' }]);
+      const checkoutCart = await startCheckout(
+        cartLines,
+        bundleDiscount ? [bundleDiscount.code] : []
+      );
+      const currency = checkoutCart.cost.subtotalAmount.currencyCode;
+      const actualMerchandiseTotal = checkoutCart.lines.edges.reduce(
+        (sum, { node }) => sum + Number(node.cost.totalAmount.amount),
+        0
+      );
+
+      if (
+        bundleDiscount &&
+        !checkoutCart.discountCodes?.some(
+          (discount) =>
+            discount.code.toLowerCase() === bundleDiscount.code.toLowerCase() &&
+            discount.applicable
+        )
+      ) {
+        setError('Shopify did not apply the selected bundle discount. Checkout was not opened.');
+        return;
       }
 
-      const items = lines.map((l) => ({
-        item_id: l.variant.id,
-        item_name: l.name,
-        price: l.price,
-        quantity: l.qty,
+      if (currency !== 'USD' || Math.abs(actualMerchandiseTotal - total) >= 0.01) {
+        setError(
+          `Shopify calculated $${actualMerchandiseTotal.toFixed(2)} for this cart, but the selected offer is $${total.toFixed(2)}. Checkout was not opened.`
+        );
+        return;
+      }
+      if (!checkoutCart.checkoutUrl) {
+        setError('Shopify did not return a checkout link. Please try again in a moment.');
+        return;
+      }
+
+      const items = checkoutCart.lines.edges.map(({ node }) => ({
+        item_id: node.merchandise.id,
+        item_name: `${node.merchandise.product.title} - ${node.merchandise.title}`,
+        price: Number(node.cost.totalAmount.amount) / node.quantity,
+        quantity: node.quantity,
       }));
 
-      trackAddToCart(
-        PRODUCT_HANDLES.heroRamp,
-        rampLineName,
-        rampPrice,
-        units,
-        'USD'
-      );
-      trackBeginCheckout(items, 'USD');
-      pushBeginCheckoutDataLayer(items, 'USD');
-
-      if (checkoutUrl) {
-        // CRITICAL: forward click IDs + UTMs so attribution survives the
-        // cross-domain hop to Shopify checkout
-        window.location.assign(appendAttribution(checkoutUrl, collectAttributionParams()));
+      for (const { node } of checkoutCart.lines.edges) {
+        trackAddToCart(
+          node.merchandise.product.handle,
+          `${node.merchandise.product.title} - ${node.merchandise.title}`,
+          Number(node.cost.totalAmount.amount) / node.quantity,
+          node.quantity,
+          currency
+        );
       }
+      trackBeginCheckout(items, currency);
+      pushBeginCheckoutDataLayer(items, currency);
+
+      window.location.assign(
+        appendAttribution(checkoutCart.checkoutUrl, collectAttributionParams())
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setBuying(false);
     }
-  }, [tier, rampSize, rampPrice, rampVariant, bumpActive, tetherActive, matVariant, tetherVariant, sizeFulfillable, addItem, checkoutUrl]);
+  }, [tier, rampSize, rampVariant, rampUnits, bumpActive, tetherActive, matVariant, tetherVariant, sizeFulfillable, loading, cartLoading, startCheckout, total]);
 
   const value: PurchaseContextValue = {
     tier,

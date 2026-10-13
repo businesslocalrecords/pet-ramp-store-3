@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { Cart } from './shopify';
+import type { Cart, CartLine } from './shopify';
 
 export const CART_ID_KEY = 'pet_ramp_cart_id';
 
@@ -7,6 +7,7 @@ export interface CartContextValue {
   cart: Cart | null;
   loading: boolean;
   error: string | null;
+  startCheckout: (lines: CartLine[], discountCodes?: string[]) => Promise<Cart>;
   addItem: (merchandiseId: string, quantity?: number, attributes?: { key: string; value: string }[]) => Promise<void>;
   updateQuantity: (lineId: string, quantity: number) => Promise<void>;
   removeItem: (lineId: string) => Promise<void>;

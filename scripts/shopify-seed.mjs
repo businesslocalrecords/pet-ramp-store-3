@@ -61,18 +61,18 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const OUTPUT_FILE = path.join(__dirname, 'seed-output.json');
+const PRODUCT_HANDLES = JSON.parse(
+  fs.readFileSync(path.join(ROOT, 'src/lib/bundle-discounts.json'), 'utf8')
+).productHandles;
 
 /* -------------------------------------------------------------------------- */
 /* Config â€” loaded from .env.local                                             */
 /* -------------------------------------------------------------------------- */
 
 function loadEnv() {
-  const env = {};
+  const env = { ...process.env };
   const envPath = path.join(ROOT, '.env.local');
-  if (!fs.existsSync(envPath)) {
-    console.error(`\n  ERROR: ${envPath} not found.\n`);
-    process.exit(1);
-  }
+  if (!fs.existsSync(envPath)) return env;
   for (const rawLine of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
     const line = rawLine.trim();
     if (!line || line.startsWith('#')) continue;
@@ -84,7 +84,7 @@ function loadEnv() {
     if (value.length >= 2 && ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'")))) {
       value = value.slice(1, -1);
     }
-    env[key] = value;
+    env[key] ??= value;
   }
   return env;
 }
@@ -114,7 +114,7 @@ const API_VERSION = '2025-10';
 const DRY_RUN = process.argv.includes('--dry-run');
 const VERIFY_ONLY = process.argv.includes('--verify');
 
-if (!SHOP_DOMAIN) {
+if (!SHOP_DOMAIN && !DRY_RUN) {
   console.error('  ERROR: VITE_SHOPIFY_STOREFRONT_DOMAIN is missing from .env.local');
   process.exit(1);
 }
@@ -210,7 +210,7 @@ async function getToken() {
  * products by handle and tag in src/lib/offers.ts, never by collection.
  */
 const REQUIRED_SCOPES = [
-  'write_products', 'write_inventory', 'write_publications', 'write_locations',
+  'read_products', 'write_products', 'write_inventory', 'write_publications', 'write_locations',
 ];
 
 /** Reads are useful but not blocking. */
@@ -355,17 +355,21 @@ async function resolveLocation() {
 /**
  * Looks up a product by handle.
  *
- * Returns null when the app lacks read_products — in that case we cannot tell
- * whether the product already exists, so we attempt the create anyway. Shopify
- * rejects a duplicate handle with a clear userError, which the caller reports,
- * and that is a better outcome than refusing to run at all.
+ * Full product details are needed to reconcile variants without removing
+ * entries that are not part of this catalog.
  */
 async function findProductByHandle(handle) {
   try {
     const data = await gql(
       `query($q: String!) {
          products(first: 5, query: $q) {
-           edges { node { id title handle status } }
+           edges { node {
+             id title handle status
+             options { id name position optionValues { id name } }
+             variants(first: 100) {
+               edges { node { id title sku price compareAtPrice selectedOptions { name value } } }
+             }
+           } }
          }
        }`,
       { q: `handle:${handle}` }
@@ -373,8 +377,7 @@ async function findProductByHandle(handle) {
     return data.products.edges.map((e) => e.node)[0] ?? null;
   } catch (err) {
     if (/access denied|not authorized|invalid api key|scope/i.test(err.message)) {
-      warn(`read_products not granted — cannot check if "${handle}" already exists.`);
-      return null;
+      throw new Error(`read_products is required to safely reconcile "${handle}": ${err.message}`);
     }
     throw err;
   }
@@ -409,7 +412,7 @@ const CATALOG = [
   /* ------------------------------- HERO ------------------------------- */
   {
     key: 'heroRamp',
-    handle: 'premium-foldable-dog-car-ramp',
+    handle: PRODUCT_HANDLES.heroRamp,
     title: 'The Premium Foldable Dog Car Ramp by PawGrip Pro',
     productType: 'Dog Car Ramp',
     tags: ['hero-product', 'Car Mobility', 'bestseller'],
@@ -483,7 +486,7 @@ carries a 12-month hardware warranty against manufacturing defects.</p>
   /* --------------------- A. ORDER BUMP (impulse) ---------------------- */
   {
     key: 'tractionMat',
-    handle: 'heavy-duty-traction-mat-upgrade-2-pack',
+    handle: PRODUCT_HANDLES.tractionMat,
     title: 'Heavy-Duty Traction Mat Upgrade (2-Pack)',
     productType: 'Ramp Accessory',
     tags: ['order-bump', 'Bumps', 'accessory'],
@@ -526,7 +529,7 @@ stops moving.</em></p>
   /* ---------------- B. POST-PURCHASE / TRAVEL SAFETY ------------------ */
   {
     key: 'carTether',
-    handle: 'crash-tested-adjustable-car-safety-tether',
+    handle: PRODUCT_HANDLES.carTether,
     title: 'Adjustable Car Safety Tether',
     productType: 'Car Safety',
     tags: ['post-purchase-upsell', 'Car Mobility', 'bestseller'],
@@ -571,7 +574,7 @@ on the same order more often than any other accessory.</p>
   /* ------------------ C. AT-HOME MOBILITY UPSell ---------------------- */
   {
     key: 'bedSteps',
-    handle: 'orthopedic-foam-bed-steps',
+    handle: PRODUCT_HANDLES.bedSteps,
     title: 'Orthopedic Foam Bed Steps (For Small & Senior Dogs)',
     productType: 'Pet Steps',
     tags: ['post-purchase-upsell', 'Home Mobility'],
@@ -619,7 +622,7 @@ before the jump.</p>
   /* -------------- D. JOINT HEALTH CONSUMABLE (recurs) ----------------- */
   {
     key: 'jointChews',
-    handle: 'advanced-hip-joint-soft-chews',
+    handle: PRODUCT_HANDLES.jointChews,
     title: 'Advanced Hip & Joint Soft Chews',
     productType: 'Supplement',
     tags: ['post-purchase-upsell', 'Joint Care', 'subscription-eligible'],
@@ -696,19 +699,10 @@ const manifest = { createdAt: new Date().toISOString(), shop: SHOP_DOMAIN, produ
  * manifest is UPDATED rather than created, and its variants are not rebuilt,
  * so re-running never duplicates products or variants.
  */
-let PRIOR = {};
-try {
-  PRIOR = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf8'));
-} catch {
-  PRIOR = {};
-}
-
 /**
  * Variant "signature": the option/price/sku set a product is supposed to end
- * up with. Idempotency compares this against the manifest, so adding a new
- * size (e.g. the Extended 70″ variant) re-syncs variants on the next run
- * without duplicating them — productVariantsBulkCreate matches on option
- * values, so re-running updates rather than appends.
+ * up with. It is recorded for diagnostics; live reconciliation reads Shopify
+ * and never trusts a local manifest as proof of the current variant set.
  */
 function variantSignature(item) {
   return JSON.stringify(
@@ -716,17 +710,96 @@ function variantSignature(item) {
   );
 }
 
+async function reconcileExistingProduct(item, existing) {
+  if (existing.options.length !== 1 || existing.options[0].name !== item.options[0]) {
+    throw new Error(
+      `Refusing to change ${item.handle}: expected only the "${item.options[0]}" option; found ${existing.options.map((option) => option.name).join(', ') || '(none)'}.`
+    );
+  }
+
+  const option = existing.options[0];
+  const expectedValues = new Set(item.variants.map((variant) => variant.option));
+  const existingVariants = existing.variants.edges.map((edge) => edge.node);
+  const variantsByOption = new Map();
+
+  for (const variant of existingVariants) {
+    const selectedOptions = variant.selectedOptions;
+    const value = selectedOptions.find((selected) => selected.name === item.options[0])?.value;
+    if (selectedOptions.length !== 1 || !expectedValues.has(value)) {
+      throw new Error(
+        `Refusing to change ${item.handle}: existing variant "${variant.title}" is outside the expected option set.`
+      );
+    }
+    variantsByOption.set(value, variant);
+  }
+
+  const optionValues = item.variants.map((expected) => {
+    const current = option.optionValues.find((value) => value.name === expected.option);
+    return current ? { id: current.id, name: current.name } : { name: expected.option };
+  });
+  const product = {
+    handle: item.handle,
+    title: item.title,
+    descriptionHtml: item.description,
+    productType: item.productType,
+    tags: item.tags,
+    vendor: 'PawGrip Pro',
+    status: item.status ?? 'ACTIVE',
+    productOptions: [{ id: option.id, name: option.name, position: 1, values: optionValues }],
+    variants: item.variants.map((expected) => {
+      const current = variantsByOption.get(expected.option);
+      return {
+        ...(current ? { id: current.id } : {}),
+        optionValues: [{ optionName: item.options[0], name: expected.option }],
+        price: String(expected.price),
+        compareAtPrice: String(expected.compareAt ?? item.compareAt),
+        sku: expected.sku,
+        inventoryPolicy: 'DENY',
+        inventoryItem: {
+          cost: String(item.cost),
+          tracked: item.trackInventory,
+          sku: expected.sku,
+          measurement: { weight: { value: item.weight, unit: item.weightUnit } },
+        },
+        ...(!current && item.trackInventory && LOCATION_ID
+          ? {
+              inventoryQuantities: [
+                {
+                  locationId: LOCATION_ID,
+                  name: 'available',
+                  quantity: expected.inventory ?? item.inventoryQuantity,
+                },
+              ],
+            }
+          : {}),
+      };
+    }),
+  };
+
+  const data = await gql(
+    `mutation productSet($identifier: ProductSetIdentifiers!, $input: ProductSetInput!, $synchronous: Boolean!) {
+       productSet(identifier: $identifier, input: $input, synchronous: $synchronous) {
+         product { id title handle status }
+         userErrors { field message }
+       }
+     }`,
+    { identifier: { id: existing.id }, input: product, synchronous: true }
+  );
+  const result = data.productSet;
+  if (result.userErrors?.length) {
+    throw new Error(result.userErrors.map((error) => error.message).join('; '));
+  }
+  if (!result.product) {
+    throw new Error(`Shopify did not return the reconciled product for ${item.handle}.`);
+  }
+  return result.product;
+}
+
 async function seedProducts() {
   log('\n── Products ─────────────────────────────────────────────');
   for (const item of CATALOG) {
-    const prior = PRIOR.products?.[item.key];
     const signature = variantSignature(item);
-    // Manifest takes priority: it is authoritative for IDs we created ourselves
-    const existing = prior?.id
-      ? { id: prior.id, title: item.title, handle: item.handle, status: 'ACTIVE' }
-      : DRY_RUN
-        ? null
-        : await findProductByHandle(item.handle);
+    const existing = DRY_RUN ? null : await findProductByHandle(item.handle);
 
     if (VERIFY_ONLY) {
       log(`  ${existing ? 'âœ“' : 'Â·'} ${item.handle}${existing ? `  (${existing.title})` : '  â€” not created yet'}`);
@@ -766,42 +839,20 @@ async function seedProducts() {
     };
 
     if (DRY_RUN) {
-      log(`  (dry-run) would ${existing ? 'update' : 'create'}: ${item.handle}  $${item.price} / $${item.compareAt}`);
+      log(`  (dry-run) would ensure product and variants: ${item.handle}  $${item.price} / $${item.compareAt}`);
       continue;
     }
 
     if (existing) {
-      const data = await gql(
-        `mutation productUpdate($product: ProductUpdateInput!) {
-           productUpdate(product: $product) {
-             product { id title handle }
-             userErrors { field message }
-           }
-         }`,
-        {
-          product: {
-            id: existing.id,
-            title: item.title,
-            descriptionHtml: item.description,
-            productType: item.productType,
-            tags: item.tags,
-            status: item.status ?? 'ACTIVE',
-          },
-        }
-      );
-      const errs = data.productUpdate.userErrors;
-      if (errs?.length) {
-        warn(`update failed for ${item.handle}: ${errs.map((e) => e.message).join(', ')}`);
-      } else {
-        ok(`updated ${item.handle}`);
-      }
+      await reconcileExistingProduct(item, existing);
+      ok(`reconciled ${item.handle}`);
       manifest.products[item.key] = {
         handle: item.handle,
         exists: true,
         id: existing.id,
         updated: true,
-        variantsCreated: prior?.variantsCreated === true,
-        variantCount: prior?.variantCount ?? null,
+        variantsCreated: true,
+        variantCount: item.variants.length,
         variantSignature: signature,
       };
     } else {
@@ -829,30 +880,7 @@ async function seedProducts() {
       const created = data.productCreate.product;
       ok(`created ${created.handle} — ${created.title}`);
 
-      // STEP 2 — bulk-create the variants (price, stock, sku, cost).
-      // Skipped when the manifest records the SAME variant set from a
-      // previous run, so a plain re-run updates the product without
-      // touching variants. A changed signature (new size, new price) forces
-      // a re-sync, which updates matching option values in place.
-      if (prior?.variantsCreated && prior?.variantSignature === signature) {
-        ok(`  variants already provisioned by an earlier run — skipping (${prior.variantCount ?? '?'} on record)`);
-        manifest.products[item.key] = {
-          handle: item.handle,
-          exists: true,
-          id: created.id,
-          price: item.price,
-          stock: item.inventoryQuantity,
-          variantsCreated: true,
-          variantCount: prior.variantCount,
-          variantSignature: signature,
-        };
-        continue;
-      }
-
-      if (prior?.variantsCreated && prior?.variantSignature !== signature) {
-        log(`  variant set changed since the last run — re-syncing variants (${signature})`);
-      }
-
+      // STEP 2 — bulk-create the initial variants (price, stock, sku, cost).
       let createdVariantCount = 0;
       try {
         const variantRes = await gql(
@@ -1148,11 +1176,18 @@ async function seedCollections() {
 async function verify() {
   log(`\nâ”€â”€ Verifying store: ${SHOP_DOMAIN} â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€`);
   try {
+    let failures = 0;
     const data = await gql(
       `query {
          products(first: 50) {
-           edges { node { id title handle status tags
-             variants(first: 10) { edges { node { id sku price compareAtPrice } } }
+           edges { node { id title handle status tags onlineStoreUrl
+             resourcePublicationsV2(first: 20, catalogType: APP, onlyPublished: false) {
+               edges { node { isPublished publication { name } } }
+             }
+             variants(first: 100) { edges { node {
+               id title sku price compareAtPrice inventoryPolicy inventoryItem { tracked }
+               selectedOptions { name value }
+             } } }
              totalInventory
            } }
          }
@@ -1164,16 +1199,83 @@ async function verify() {
       const found = data.products.edges
         .map((e) => e.node)
         .find((p) => p.handle === item.handle);
-      if (found) {
-        matched += 1;
-        const v = found.variants.edges[0]?.node;
-        log(`  âœ“ ${found.handle}`);
-        log(`      status: ${found.status}  stock: ${found.totalInventory ?? 'n/a'}`);
-        log(`      price:  $${v?.price ?? '?'}  compare-at: $${v?.compareAtPrice ?? '?'}`);
-        log(`      tags:   ${found.tags?.join(', ') || '(none)'}`);
-      } else {
-        log(`  Â· ${item.handle} â€” not found`);
+      if (!found) {
+        failures += 1;
+        warn(`${item.handle}: product is missing`);
+        continue;
       }
+
+      matched += 1;
+      const actualVariants = found.variants.edges.map((edge) => edge.node);
+      const actualByOption = new Map(
+        actualVariants.map((variant) => {
+          const optionValue =
+            variant.selectedOptions.find((option) => option.name === item.options[0])?.value ??
+            variant.title;
+          return [optionValue, variant];
+        })
+      );
+      const mismatches = [];
+
+      if (found.title !== item.title) {
+        mismatches.push(`title expected "${item.title}", got "${found.title}"`);
+      }
+      if (found.status !== (item.status ?? 'ACTIVE')) {
+        mismatches.push(`status expected ${item.status ?? 'ACTIVE'}, got ${found.status}`);
+      }
+      if (actualVariants.length !== item.variants.length) {
+        mismatches.push(`variant count expected ${item.variants.length}, got ${actualVariants.length}`);
+      }
+
+      for (const expected of item.variants) {
+        const actual = actualByOption.get(expected.option);
+        if (!actual) {
+          mismatches.push(`missing variant "${expected.option}"`);
+          continue;
+        }
+        if (actual.sku !== expected.sku) {
+          mismatches.push(`${expected.option} SKU expected ${expected.sku}, got ${actual.sku || '(empty)'}`);
+        }
+        if (Number(actual.price) !== expected.price) {
+          mismatches.push(`${expected.option} price expected $${expected.price.toFixed(2)}, got $${actual.price}`);
+        }
+        const expectedCompareAt = expected.compareAt ?? item.compareAt;
+        const actualCompareAt = actual.compareAtPrice === null ? null : Number(actual.compareAtPrice);
+        if (actualCompareAt !== expectedCompareAt) {
+          mismatches.push(
+            `${expected.option} compare-at expected $${expectedCompareAt.toFixed(2)}, got ${actual.compareAtPrice ? `$${actual.compareAtPrice}` : '(none)'}`
+          );
+        }
+        if (actual.inventoryItem.tracked !== item.trackInventory) {
+          mismatches.push(`${expected.option} inventory tracking expected ${item.trackInventory}, got ${actual.inventoryItem.tracked}`);
+        }
+        if (actual.inventoryPolicy !== 'DENY') {
+          mismatches.push(`${expected.option} inventory policy expected DENY, got ${actual.inventoryPolicy}`);
+        }
+      }
+
+      const publishedChannels = found.resourcePublicationsV2.edges
+        .filter((edge) => edge.node.isPublished)
+        .map((edge) => edge.node.publication.name);
+      if ((item.status ?? 'ACTIVE') === 'ACTIVE' && publishedChannels.length === 0) {
+        mismatches.push('active product is not published to a sales channel');
+      }
+      if ((item.status ?? 'ACTIVE') === 'DRAFT' && publishedChannels.length > 0) {
+        mismatches.push(`draft product is published to ${publishedChannels.join(', ')}`);
+      }
+
+      if (mismatches.length) {
+        failures += 1;
+        warn(`${found.handle}: ${mismatches.join('; ')}`);
+      } else {
+        ok(`${found.handle}: ${actualVariants.length} variants match`);
+      }
+      log(`      status: ${found.status}  inventory: ${found.totalInventory ?? 'n/a'}`);
+      log(`      channels: ${publishedChannels.join(', ') || '(none)'}`);
+      actualVariants.forEach((variant) => {
+        log(`      ${variant.title}: SKU ${variant.sku || '(empty)'}, $${variant.price}, compare-at $${variant.compareAtPrice ?? 'none'}`);
+      });
+      log(`      tags: ${found.tags?.join(', ') || '(none)'}`);
     }
 
     log(`\n  ${matched}/${CATALOG.length} catalog products present.`);
@@ -1186,8 +1288,15 @@ async function verify() {
       log('  NOTE: demo/default products should be deleted before running PMax so');
       log('        Google Merchant Center does not flag unrelated inventory.');
     }
+    if (failures) {
+      process.exitCode = 1;
+      warn(`Verification failed: ${failures} product(s) need attention.`);
+    } else {
+      ok('Every expected product and variant matches the catalog.');
+    }
   } catch (err) {
     warn(`Verification failed: ${err.message}`);
+    process.exitCode = 1;
   }
 }
 
